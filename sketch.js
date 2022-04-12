@@ -18,6 +18,9 @@ var adventureManager;
 
 // p5.play
 var playerAvatar;
+// 0 = up | 1 = down | 2 = left | 3 = right
+var direction = 1;
+var standing_imgs = [];
 
 // Clickables: the manager class
 var clickablesManager;    // the manager class
@@ -43,6 +46,9 @@ function preload() {
   clickablesManager = new ClickableManager('data/clickableLayout.csv');
   adventureManager = new AdventureManager('data/adventureStates.csv', 'data/interactionTable.csv', 'data/clickableLayout.csv');
   //---
+  standing_imgs[0] = loadImage('assets/walk-down.png');
+  standing_imgs[1] = loadImage('assets/walk-up.png');
+  standing_imgs[2] = loadImage('assets/walk-side.png');
 }
 
 // Setup the adventure manager
@@ -61,8 +67,12 @@ function setup() {
   playerAvatar.setMaxSpeed(20);
 
   // MODIFY THIS: add your filenames here, right now our moving animation and standing animation are the same
-  playerAvatar.addMovingAnimation( 'assets/walk-side-01.png', 'assets/walk-side-04.png');
-  playerAvatar.addStandingAnimation('assets/walk-down-01.png', 'assets/walk-down-01.png');
+  playerAvatar.sprite.addImage('standing-down', standing_imgs[0]);
+  playerAvatar.sprite.addAnimation('walk-down', 'assets/walk-down-01.png', 'assets/walk-down-04.png')
+  playerAvatar.sprite.addImage('standing-up', standing_imgs[1]);
+  playerAvatar.sprite.addAnimation('walk-up', 'assets/walk-up-01.png', 'assets/walk-up-04.png')
+  playerAvatar.sprite.addImage('standing-side', standing_imgs[2]);
+  playerAvatar.sprite.addAnimation('walk-side', 'assets/walk-side-01.png', 'assets/walk-side-04.png')
 
   //--- TEMPLATE STUFF: Don't change
   // use this to track movement from toom to room in adventureManager.draw()
@@ -98,11 +108,63 @@ function draw() {
       
     //--- TEMPLATE STUFF: Don't change    
     // responds to keydowns
-    checkMovement();
+    checkMovementAdvanced();
 
     // this is a function of p5.play, not of this sketch
     drawSprite(playerAvatar.sprite);
     //--
+  } 
+}
+
+function checkMovementAdvanced() {
+  // Check x movement
+  if(keyIsDown(D_KEY)) {
+    // D
+    playerAvatar.sprite.mirrorX(1);
+    playerAvatar.sprite.changeAnimation('walk-side');
+    direction = 3;
+    playerAvatar.sprite.velocity.x = speed;
+  }
+  else if(keyIsDown(A_KEY)) {
+    // A
+    playerAvatar.sprite.mirrorX(-1);
+    playerAvatar.sprite.changeAnimation('walk-side');
+    direction = 2;
+    playerAvatar.sprite.velocity.x = -speed;
+  }
+  else {
+    checkDirection();
+    playerAvatar.sprite.velocity.x = 0;
+  }
+
+  // Check y movement
+  if(keyIsDown(S_KEY)) {
+    // S
+    playerAvatar.sprite.mirrorX(1);
+    playerAvatar.sprite.changeAnimation('walk-down');
+    direction = 1;
+    playerAvatar.sprite.velocity.y = speed;
+
+  }
+  else if(keyIsDown(W_KEY)) {
+    // W
+    playerAvatar.sprite.mirrorX(1);
+    playerAvatar.sprite.changeAnimation('walk-up');
+    direction = 0;
+    playerAvatar.sprite.velocity.y = -speed;
+  }
+  else {
+    playerAvatar.sprite.velocity.y = 0;
+  }
+}
+
+function checkDirection() {
+  if (direction === 0 ) {
+    playerAvatar.sprite.changeImage('standing-up');
+  } else if (direction === 1 ) {
+    playerAvatar.sprite.changeImage('standing-down');
+  } else {
+    playerAvatar.sprite.changeImage('standing-side');
   } 
 }
 
