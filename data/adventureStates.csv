@@ -1,0 +1,9 @@
+ID,StateName,ClassName,PNGFilename,CollisionFilename
+0,Splash,PNGRoom,assets/Splash.png,
+1,Instructions,PNGRoom,assets/Background.png,
+2,Map1,PNGRoom,assets/map_1.png,
+3,Map2,PNGRoom,assets/map_2.png,
+4,Map3,PNGRoom,assets/map_3.png,
+5,Map4,PNGRoom,assets/map_4.png,
+6,Map5,PNGRoom,assets/map_5.png,
+7,Map6,PNGRoom,assets/map_6.png,

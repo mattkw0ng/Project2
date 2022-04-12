@@ -1,0 +1,17 @@
+CurrentState,ClickableName,MapDirection,NextState
+Splash,,,Instructions
+Instructions,StartGame,,Map5
+Map1,,E,Map2
+Map1,,S,Map4
+Map2,,W,Map1
+Map2,,E,Map3
+Map2,,S,Map5
+Map3,,W,Map2
+Map3,,S,Map6
+Map4,,N,Map1
+Map4,,E,Map5
+Map5,,W,Map4
+Map5,,N,Map2
+Map5,,E,Map6
+Map6,,W,Map5
+Map6,,N,Map3
