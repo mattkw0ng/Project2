@@ -1,0 +1,7 @@
+Ideas:
+Quest class?
+- first quest: find shelter (go to library for more information)
+- second quest: get a job (write and print resume at library, also research/interview prep -> interview for the job)
+- third quest: become a chef (score a certain amount of points)
+- fourth quest: become manager (score a certain amount of points)
+- fifth quest: buy apartment (visit residential area)

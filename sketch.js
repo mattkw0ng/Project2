@@ -21,6 +21,8 @@ var playerAvatar;
 // 0 = up | 1 = down | 2 = left | 3 = right
 var direction = 1;
 var standing_imgs = [];
+// doors
+var doors = [];
 
 // Clickables: the manager class
 var clickablesManager;    // the manager class
@@ -35,7 +37,7 @@ const A_KEY = 65;
 //---
 
 //-- MODIFY THIS for different speeds
-var speed = 10;
+var speed = 7                                                                                                                   ;
 
 //--- Your globals would go here
 
@@ -82,13 +84,12 @@ function setup() {
   // based on the state name in the clickableLayout
   adventureManager.setClickableManager(clickablesManager);
 
-    // This will load the images, go through state and interation tables, etc
+  // This will load the images, go through state and interation tables, etc
   adventureManager.setup();
 
   // call OUR function to setup additional information about the p5.clickables
   // that are not in the array 
   setupClickables(); 
-  //--
 }
 
 // Adventure manager handles it all!
@@ -302,3 +303,44 @@ class TemplateScreen extends PNGRoom {
 }
 //-- done copy
 
+class DoorSprite {
+  constructor(name, x, y, size) {
+    this,name = name;
+    this.sprite = createSprite(x, y);
+    this.sprite.height = 55;
+    if (size === 1) {
+      this.sprite.width = 40;
+    } else {
+      this.sprite.width = 80;
+    }
+  }
+}
+
+class LibraryRoom extends PNGRoom {
+  preload() {
+    // define class varibles here, load images or anything else
+    
+    // this is a door sprite
+    this.door = new DoorSprite("Library", 580, 517, 2);
+  }
+
+  // call the PNGRoom superclass's draw function to draw the background image
+  // and draw our code adter this
+  draw() {
+    // this calls PNGRoom.draw()
+    super.draw();
+    // Add your code here
+
+    drawSprites();
+
+    playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
+  }
+
+   doorCollision(spriteA, spriteB) {
+     // teleport to library
+     playerAvatar.sprite.position.x = width/2;
+     playerAvatar.sprite.position.y = height;
+     console.log("moved to : " + height + ", " + width/2);
+     adventureManager.changeState("Library");
+   }
+}

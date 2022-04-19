@@ -276,10 +276,12 @@ class AdventureManager {
                     if( direction === this.interactionTable.getString(i, 'MapDirection') ) {
                         // if a match, set the drawFunction to the next state, eval() converts
                         // string to function
+                        let prevState = this.currentStateName;
+                        
                         this.changeState(this.interactionTable.getString(i, 'NextState') );
                         stateChanged = true; 
 
-                        this.adjustSpriteForRoom();
+                        this.adjustSpriteForRoom(prevState);
                         break;
                     }
                 }
@@ -314,9 +316,14 @@ class AdventureManager {
         return "";
     }
 
-    adjustSpriteForRoom() {
+    adjustSpriteForRoom(prevState) {
         if( this.playerSprite === null ) {
             return;
+        }
+
+        if( prevState == "Library") {
+            this.playerSprite.position.x = 580;
+            this.playerSprite.position.y = 600;
         }
 
         if( this.playerSprite.position.x < -1 ) {
@@ -527,10 +534,11 @@ class PNGRoom {
     // Go through our array and ook to see if we are in bounds anywhere
     checkForCollision(ps) {
         if( ps !== null ) {  
+            let x_offset = 10;
             for(let i = 0; i < this.collisionSX.length; i++ ) {
-                if( ps.position.x >= this.collisionSX[i] &&  ps.position.x <= this.collisionEX[i] ) {
-                    if( ps.position.y >= this.collisionSY[i] &&  ps.position.y <= this.collisionEY[i] ) {
-                        //print("collsion at shape " + i);
+                if( ps.position.x + (ps.width/2 - x_offset) >= this.collisionSX[i] &&  ps.position.x - (ps.width/2 - x_offset) <= this.collisionEX[i] ) {
+                    if( ps.position.y + ps.height/2 >= this.collisionSY[i] &&  ps.position.y + ps.height/2 <= this.collisionEY[i] ) {
+                        // print("collsion at shape " + i);
                         return true;
                     }
                 }
