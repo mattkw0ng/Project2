@@ -87,6 +87,8 @@ function setup() {
   // This will load the images, go through state and interation tables, etc
   adventureManager.setup();
 
+
+  // adventureManager.changeState("Map6");
   // call OUR function to setup additional information about the p5.clickables
   // that are not in the array 
   setupClickables(); 
@@ -308,6 +310,7 @@ class DoorSprite {
     this,name = name;
     this.sprite = createSprite(x, y);
     this.sprite.height = 55;
+    this.sprite.visible = false;
     if (size === 1) {
       this.sprite.width = 40;
     } else {
@@ -322,6 +325,7 @@ class LibraryRoom extends PNGRoom {
     
     // this is a door sprite
     this.door = new DoorSprite("Library", 580, 517, 2);
+    this.plate = new Dish(3);
   }
 
   // call the PNGRoom superclass's draw function to draw the background image
@@ -332,7 +336,7 @@ class LibraryRoom extends PNGRoom {
     // Add your code here
 
     drawSprites();
-
+    this.plate.checkCollisions();
     playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
   }
 

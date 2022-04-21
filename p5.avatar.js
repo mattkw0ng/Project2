@@ -146,3 +146,48 @@ class StaticSprite {
     this.sprite.addImage('static', this.img );
   }
 }
+
+class Dish {
+  constructor(numStains) {
+    this.maxStains = numStains;
+    this.stainsCleaned = 0;
+    this.stainSprites = [];
+    this.plate = createSprite(500, 500);
+    this.plate.width = 500;
+    this.plate.height = 500;
+    for( let i = 0 ; i < this.maxStains ; i ++) {
+      let x = Math.random()*500 + 250;
+      let y = Math.random()*500 + 250;
+      this.stainSprites[i] = createSprite(x, y);
+      this.stainSprites[i].mouseActive;
+      this.stainSprites[i].setDefaultCollider();
+    }
+  }
+
+  checkCollisions() {
+    for( let i = 0 ; i < this.maxStains ; i ++) {
+      this.stainSprites[i].mouseUpdate();
+      if(this.stainSprites[i].mouseIsOver && this.stainSprites[i].mouseIsPressed && this.stainSprites[i].score !== -1) {
+        console.log("cleaned");
+        this.stainSprites[i].score = -1;
+        this.stainSprites[i].visible = false;
+        this.stainsCleaned ++;
+      }
+    }
+
+    if(this.isDone()) {
+      this.cleanup();
+    }
+  }
+
+  isDone() {
+    return this.stainsCleaned === this.maxStains;
+  }
+
+  cleanup() {
+    this.plate.remove();
+    for ( let i = 0 ; i < this.maxStains ; i ++) {
+      this.stainSprites[i].remove();
+    }
+  }
+}
