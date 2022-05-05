@@ -5,3 +5,19 @@ Quest class?
 - third quest: become a chef (score a certain amount of points)
 - fourth quest: become manager (score a certain amount of points)
 - fifth quest: buy apartment (visit residential area)
+
+
+NPCs:
+- Librarian
+  > Tell you to go to visit the shelter
+  > Tell you how to write and print the resume
+    also where to find interview prep material ( a book )
+- Shelter Volunteer/Helper
+  > Starts second quest
+  > Tells you how many days you have left
+  > Tells you what to do next
+  
+- Restaurant Manager
+  > Quiz
+- Rosie's Son?
+  > escort son to school everyday?

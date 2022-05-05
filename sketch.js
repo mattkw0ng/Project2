@@ -34,16 +34,32 @@ const S_KEY = 83;
 const D_KEY = 68;
 const A_KEY = 65;
 
-//---
+var speed = 7;
 
-//-- MODIFY THIS for different speeds
-var speed = 7                                                                                                                   ;
+// globals for text box
+var textIndex = 0;
+var maxTexts = 2;
 
-//--- Your globals would go here
+// globals for selection box
+var selectedChoiceIndex = 0;
+var maxChoices = 2;
+var submitSelection = true;
 
+// globals for interactionCSVs
+var currentlyInteracting = false;
+var multipleInteractions = false;
+var interactionIndex = 0;
+var librarianTables = [];
+var volunteerTables = [];
+
+// globals for Quest and Storyline;
+var storyline;
+var advanceStory = false;
+var questNum = 0;
 
 // Allocate Adventure Manager with states table and interaction tables
 function preload() {
+  storyline = new Storyline();
   //--- TEMPLATE STUFF: Don't change
   clickablesManager = new ClickableManager('data/clickableLayout.csv');
   adventureManager = new AdventureManager('data/adventureStates.csv', 'data/interactionTable.csv', 'data/clickableLayout.csv');
@@ -51,6 +67,13 @@ function preload() {
   standing_imgs[0] = loadImage('assets/walk-down.png');
   standing_imgs[1] = loadImage('assets/walk-up.png');
   standing_imgs[2] = loadImage('assets/walk-side.png');
+  //---
+  librarianTables[0] = loadTable('data/librarianQuest1.csv', 'csv', 'header');
+  librarianTables[1] = loadTable('data/librarianQuest2.csv', 'csv', 'header');
+  librarianTables[2] = loadTable('data/librarianQuest2b.csv', 'csv', 'header');
+
+  volunteerTables[0] = loadTable('data/volunteerQuest1.csv', 'csv', 'header')
+  volunteerTables[1] = loadTable('data/volunteerQuest2.csv', 'csv', 'header')
 }
 
 // Setup the adventure manager
@@ -88,7 +111,7 @@ function setup() {
   adventureManager.setup();
 
 
-  // adventureManager.changeState("Map6");
+  adventureManager.changeState("Map5");
   // call OUR function to setup additional information about the p5.clickables
   // that are not in the array 
   setupClickables(); 
@@ -117,6 +140,27 @@ function draw() {
     drawSprite(playerAvatar.sprite);
     //--
   } 
+  let positionText = "x: " + mouseX + " y: " + mouseY;
+  text(positionText,50,50);
+  storyline.checkForAdvances();  
+
+  if (keyIsDown(32)) {
+    if (currentlyInteracting) {
+      interactionIndex ++;
+      console.log(interactionIndex);
+    }
+  }
+
+  if (keyIsDown(16)) {
+    this.speed = 12;
+  } else {
+    this.speed = 7;
+  }
+}
+
+function resetState() {
+  // console.log("state changed");
+  interactionIndex = 0;
 }
 
 function checkMovementAdvanced() {
@@ -195,20 +239,85 @@ function checkMovement() {
 
   playerAvatar.setSpeed(xSpeed,ySpeed);
 }
-//--
 
 //-- MODIFY THIS: this is an example of how I structured my code. You may
 // want to do it differently
 function mouseReleased() {
   if( adventureManager.getStateName() === "Splash") {
     adventureManager.changeState("Instructions");
+  } else {
+    textIndex ++;
+    if (currentlyInteracting) {
+      interactionIndex ++;
+      console.log(interactionIndex);
+    }
   }
 }
 
+function keyPressed() {
+  if (keyCode === DOWN_ARROW) {
+    selectedChoiceIndex ++;
+  } else if (keyCode === UP_ARROW) {
+    selectedChoiceIndex --;
+  } else if (keyCode === 13) {
+    console.log("returned");
+    submitSelection = true;
+  }
 
-//-------------- CLICKABLE CODE  ---------------//
+  if (selectedChoiceIndex < 0) {
+    selectedChoiceIndex = maxChoices;
+  } else if (selectedChoiceIndex > maxChoices) {
+    selectedChoiceIndex = 0;
+  }
 
-//--- TEMPLATE STUFF: Don't change 
+}
+
+/* =============================== TEXT FUNCTIONS =============================== */
+// screen size: 1000 x 800
+
+function textBox( string , top) {
+  if (string === "") {
+    return;
+  }
+  push();
+  
+  textSize(16);
+  let yPos = 650;
+  if (top) {
+    yPos = 50
+  }
+  rect(100, yPos, 800, 100, 10);
+  text(string, 120, yPos + 20, 760, 60);
+  pop();
+}
+
+function selectTextBox( prompt, choices, selected, leftAlign) {
+  push();
+  textSize(16);
+
+  let xPos = 800;
+  if (leftAlign) {
+    xPos = 50;
+  }
+
+  let boxHeight = 95 + (choices.length * 20);
+
+  rect(xPos, 50, 150, boxHeight, 10);
+  text(prompt, xPos + 20, 70, 110, 160);
+  for( let i = 0 ; i < choices.length ; i ++) {
+    var buffer = choices[i];
+    if (selected === i) {
+      buffer = buffer.concat(" <");
+    }
+
+    text(buffer , xPos + 20, 120  + (i * 20) , 110, 160);
+  }
+  pop();
+  
+
+}
+
+//-------------- CLICKABLE CODE  ---------------// 
 function setupClickables() {
   // All clickables to have same effects
   for( let i = 0; i < clickables.length; i++ ) {
@@ -217,20 +326,14 @@ function setupClickables() {
     clickables[i].onPress = clickableButtonPressed;
   }
 }
-//--
 
-//-- MODIFY THIS:
-// tint when mouse is over
 clickableButtonHover = function () {
   this.color = "#AA33AA";
   this.noTint = false;
   this.tint = "#FF0000";
 }
 
-//-- MODIFY THIS:
-// color a light gray if off
 clickableButtonOnOutside = function () {
-  // backto our gray color
   this.color = "#AAAAAA";
 }
 
@@ -240,18 +343,11 @@ clickableButtonPressed = function() {
   // so they route to the adventure manager to do this
   adventureManager.clickablePressed(this.name); 
 }
-//
 
 
 
 //-------------- SUBCLASSES / YOUR DRAW CODE CAN GO HERE ---------------//
 
-//-- MODIFY THIS:
-// Change for your own instructions screen
-
-// Instructions screen has a backgrounnd image, loaded from the adventureStates table
-// It is sublcassed from PNGRoom, which means all the loading, unloading and drawing of that
-// class can be used. We call super() to call the super class's function as needed
 class InstructionsScreen extends PNGRoom {
   // preload is where we define OUR variables
   // Best not to use constructor() functions for sublcasses of PNGRoom
@@ -284,11 +380,6 @@ class InstructionsScreen extends PNGRoom {
   }
 }
 
-//-- MODIFY THIS: for your own classes
-// (1) copy this code block below
-// (2) paste after //-- done copy
-// (3) Change name of TemplateScreen to something more descriptive, e.g. "PuzzleRoom"
-// (4) Add that name to the adventureStates.csv file for the classname for that appropriate room
 class TemplateScreen extends PNGRoom {
   preload() {
     // define class varibles here, load images or anything else
@@ -303,29 +394,150 @@ class TemplateScreen extends PNGRoom {
     // Add your code here
   }
 }
-//-- done copy
 
-class DoorSprite {
-  constructor(name, x, y, size) {
-    this,name = name;
-    this.sprite = createSprite(x, y);
-    this.sprite.height = 55;
-    this.sprite.visible = false;
-    if (size === 1) {
-      this.sprite.width = 40;
-    } else {
-      this.sprite.width = 80;
-    }
+
+// -------- Library ---------
+
+class LibraryExterior extends PNGRoom {
+  preload() {
+    // create door sprite
+    this.door = new DoorSprite("Library", 580, 517, 2);
+  }
+
+  draw() {
+    super.draw();
+    drawSprite(this.door.sprite);
+    playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
+  }
+
+  doorCollision(spriteA, spriteB) {
+    // teleport to library
+    playerAvatar.sprite.position.x = width/2;
+    playerAvatar.sprite.position.y = height;
+    console.log("moved to : " + height + ", " + width/2);
+    adventureManager.changeState("Library");
   }
 }
 
-class LibraryRoom extends PNGRoom {
+class LibraryInterior extends PNGRoom {
+  preload() {
+    this.librarianDesk = new NPC("Librarian", 190, 700);
+    this.librarianDesk.loadInteractions(librarianTables[questNum]);
+
+    this.computer = new NPC("Computer", 623, 322);
+    this.computer.addInteractions(["Booting up", "...", "A few moments later", "I think this looks good! I hope the manager likes it."]);
+
+    this.shelf = new NPC("Shelf", 86, 473);
+    this.shelf.addInteractions(["Hmm where could this book be...", "A-C ... perhaps a little further down", "D-F ... almost there", "G-I ... Let's check here", "'How to Nail your interview' This looks like the one!"]);
+  }
+
+  draw() {
+    super.draw();
+    drawSprite(this.librarianDesk.sprite);
+    
+    if (storyline.storyIndex === 4) {
+      this.computer.displayInteractions(playerAvatar);
+    } else if (storyline.storyIndex === 5) {
+      this.shelf.displayInteractions(playerAvatar);
+    } else {
+      this.librarianDesk.displayInteractions(playerAvatar);
+    }
+    
+  }
+}
+
+// -------- Shelter ---------
+
+class ShelterExterior extends PNGRoom {
+  preload() {
+    // door sprite
+    this.door = new DoorSprite("Shelter", 455, 565, 2);
+  }
+
+  draw() {
+    super.draw();
+    drawSprite(this.door.sprite);
+    playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
+  }
+
+  doorCollision(spriteA, spriteB) {
+    // teleport to library if youve talked to the librarian
+    if (storyline.shelterLocked) {
+      textBox("Hmm this door is locked", false);
+    } else {
+      playerAvatar.sprite.position.x = width/2;
+      playerAvatar.sprite.position.y = height;
+      console.log("moved to : " + height + ", " + width/2);
+      adventureManager.changeState("Shelter");
+    }
+    
+  }
+}
+
+class ShelterInterior extends PNGRoom {
+  preload() {
+    this.volunteerDesk = new NPC("Volunteer", 190, 700);
+    this.volunteerDesk.loadInteractions(volunteerTables[questNum]);
+  }
+
+  draw() {
+    super.draw();
+    drawSprite(this.volunteerDesk.sprite);
+    this.volunteerDesk.displayInteractions(playerAvatar);
+  }
+}
+
+// 290 610
+class RestaurantExterior extends PNGRoom {
+  preload() {
+    // door sprite
+    this.door = new DoorSprite("Restaurant", 292, 580, 1);
+  }
+
+  draw() {
+    super.draw();
+    drawSprite(this.door.sprite);
+    playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
+  }
+
+  doorCollision(spriteA, spriteB) {
+    // teleport to library if youve talked to the librarian
+    if (false) {
+      textBox("Hmm this door is locked", false);
+    } else {
+      playerAvatar.sprite.position.x = width/2;
+      playerAvatar.sprite.position.y = height;
+      console.log("moved to : " + height + ", " + width/2);
+      adventureManager.changeState("Grill");
+    }
+    
+  }
+}
+
+
+class DishMinigame extends PNGRoom {
+  preload() {
+    this.plate = new Dish(3);
+  }
+
+  draw() {
+    this.plate.draw();
+    this.plate.checkCollisions();
+  }
+
+  exitGame() {
+    // teleport to library
+    playerAvatar.sprite.position.x = width/2;
+    playerAvatar.sprite.position.y = height;
+    console.log("moved to : " + height + ", " + width/2);
+    adventureManager.changeState("Map4");
+  }
+}
+
+class GrillMinigame extends PNGRoom {
   preload() {
     // define class varibles here, load images or anything else
-    
-    // this is a door sprite
-    this.door = new DoorSprite("Library", 580, 517, 2);
-    this.plate = new Dish(3);
+    this.grill = new Grill();
   }
 
   // call the PNGRoom superclass's draw function to draw the background image
@@ -334,131 +546,14 @@ class LibraryRoom extends PNGRoom {
     // this calls PNGRoom.draw()
     super.draw();
     // Add your code here
-
-    drawSprites();
-    this.plate.checkCollisions();
-    playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
+    this.grill.draw();
   }
 
-   doorCollision(spriteA, spriteB) {
-     // teleport to library
-     playerAvatar.sprite.position.x = width/2;
-     playerAvatar.sprite.position.y = height;
-     console.log("moved to : " + height + ", " + width/2);
-     adventureManager.changeState("Library");
-   }
-}
-
-class Quest {
-  constructor(title, hint) {
-    this.title = title;
-    this.hint = hint;
-    this.completed = false;
-  }
-
-  showHint() {
-    // display text
-    console.log(hint);
-  }
-
-  checkStatus() {
-    // check if done
-    return false;
-  }
-
-  printMessage(msg) {
-    // print error message
-    console.log(msg);
-  }
-}
-
-class Quest1 extends Quest{
-  // find shelter (go to library for more information)
-  constructor(title, hint) {
-    super(title, hint);
-    this.visitedLibrary = false;
-    this.talkedToLibrarian = false;
-    this.visitedShelter = false;
-  }
-
-  checkStatus() {
-    if (adventureManager.getStateName === "Library") {
-      this.visitedLibrary = true;
-    }
-
-    if (adventureManager.getStateName === "Shelter") {
-      if (this.talkedToLibrarian) {
-        this.visitedShelter = true;
-        this.completed = true;
-      } else {
-        super.printMessage("Talk to the librarian first!");
-      }
-    } 
-
-    return this.completed;
-  }
-}
-
-class Quest2 extends Quest{
-  // second quest: get a job (write and print resume at library, also research/interview prep -> interview for the job)
-  constructor(title, hint) {
-    super(title, hint);
-    this.writeResume = false;
-    this.printResume = false;
-    this.interviewPrep = false;
-  }
-
-  checkStatus() {
-    if (this.interviewPrep && this.printResume) {
-      this.completed = true;
-    }
-    return this.completed;
-  }
-
-  tryPrinting() {
-    if (this.writeResume) {
-      this.printResume = true;
-    } else {
-      super.printMessage("Write your resume first!");
-    }
-    return this.printResume;
-  }
-}
-
-class Quest3 extends Quest{
-  // third quest: become a chef/manager (score a certain amount of points)
-  constructor(title, hint) {
-    super(title, hint);
-    this.totalScore = 0;
-  }
-
-  checkStatus() {
-    if (this.totalScore >= 100) {
-      this.completed = true;
-    }
-    return this.completed;
-  }
-
-  updateScore(num) {
-    this.totalScore += num;
-  }
-}
-
-class Quest4 extends Quest{
-  // fifth quest: buy apartment (visit residential area)
-  constructor(title, hint) {
-    super(title, hint);
-    this.totalScore = 0;
-  }
-
-  checkStatus() {
-    if (this.totalScore >= 100) {
-      this.completed = true;
-    }
-    return this.completed;
-  }
-
-  updateScore(num) {
-    this.totalScore += num;
+  exitGame() {
+    // teleport to library
+    playerAvatar.sprite.position.x = width/2;
+    playerAvatar.sprite.position.y = height;
+    console.log("moved to : " + height + ", " + width/2);
+    adventureManager.changeState("Map4");
   }
 }

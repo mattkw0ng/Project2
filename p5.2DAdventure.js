@@ -72,6 +72,10 @@ class AdventureManager {
         return this.hasValidStates;
     }
 
+    reload(stateName) {
+        this.states[this.getStateNumFromString(stateName)].preload();
+    }
+
     // accessor for the state name
     getStateName() {
         return this.currentStateName;
@@ -190,6 +194,7 @@ class AdventureManager {
     changeState(newStateStr, bypassComparison = false) {
         let newStateNum = this.getStateNumFromString(newStateStr);
         this.changeStateByNum(newStateNum, bypassComparison);
+        resetState();
     }
 
     // default is by string
@@ -324,6 +329,12 @@ class AdventureManager {
         if( prevState == "Library") {
             this.playerSprite.position.x = 580;
             this.playerSprite.position.y = 600;
+        } else if (prevState == "Shelter") {
+            this.playerSprite.position.x = 455;
+            this.playerSprite.position.y = 650;
+        } else if (prevState == "Grill") {
+            this.playerSprite.position.x = 293;
+            this.playerSprite.position.y = 663;
         }
 
         if( this.playerSprite.position.x < -1 ) {
@@ -417,7 +428,7 @@ function PNGRoomFindTheThis() {
 }
 
 function PNGCollisionTableLoaded() {
-    print("PNGCollisionTableLoaded() callback");
+    print("> PNGCollisionTableLoaded() callback");
     let pThis = PNGRoomFindTheThis();
     if(pThis === null ) {
         print("Couldn't find the This");
@@ -468,7 +479,7 @@ class PNGRoom {
     // filepath to PNG is 1st variable
     // file to collision CSV is 2nd variable (may be empty string)
     setup(_imagePath, _collisionPath = "") {
-        print( "PNGRoom.setup(): imagePath =" + _imagePath);
+        print( "> PNGRoom.setup(): imagePath =" + _imagePath);
 
         this.imagePath = _imagePath;
 
@@ -481,7 +492,7 @@ class PNGRoom {
            
            PNGRoomPushedThisArray.push(this);
             this.collisionTable = loadTable(_collisionPath, 'csv', 'header', PNGCollisionTableLoaded);
-            print("PNGRoom.setup(): loading collisionTable: " + _collisionPath);
+            print("> PNGRoom.setup(): loading collisionTable: " + _collisionPath);
         }
     }
     
