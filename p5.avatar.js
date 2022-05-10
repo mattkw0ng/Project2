@@ -147,19 +147,9 @@ class StaticSprite {
   }
 }
 
-class InteractableObject {
-  constructor(name, x, y, prompt, choiceArr) {
-    this.name = name;
-    this.sprite = createSprite(x, y);
-    this.doneInteracting = false;
-    this.prompt = prompt;
-    this.choiceArr = choiceArr;
-  }
-}
-
 class DoorSprite {
   constructor(name, x, y, size) {
-    this,name = name;
+    this.name = name;
     this.sprite = createSprite(x, y);
     this.sprite.height = 55;
     // this.sprite.visible = false;
@@ -171,6 +161,145 @@ class DoorSprite {
   }
 }
 
+class Bed {
+  constructor(x,y) {
+    this.sprite = createSprite(x,y);
+  }
+
+  checkCollision(target) {
+    target.overlap(this.sprite, this.handleCollision);
+  }
+
+  handleCollision(spriteA, spriteB) {
+    if (storyline.completedDailyTasks()) {
+      textBox("Ready for bed? press [z] to confirm")
+      if (keyIsDown(90) && !dayComplete) {
+        dayComplete = true;
+      }
+    } else if (!currentlyNarrating && !currentlyTalkingToSon){
+      textBox("Rosie: I'm not tired yet.");
+    }
+  }
+}
+
+class Narrator {
+  constructor() {
+    this.lines = [];
+  }
+
+  // load lines and set narration to true
+  loadLines(arr) {
+    this.lines = arr;
+    if (this.lines !== null) {
+      currentlyNarrating = true;
+    }
+  }
+
+  speak(top) {
+    if (currentlyNarrating && narrationIndex < this.lines.length) {
+      textBox(this.lines[narrationIndex], top);
+    } else {
+      this.active = false;
+      currentlyNarrating = false;
+      narrationIndex = 0;
+    }
+  }
+}
+
+class Son extends Avatar {
+  constructor(name, x, y, pngPath) {
+    super(name, x, y);
+    this.atSchool = false;
+    this.following = true;
+    this.slowDown = 2.5;
+    this.offsetX = 55;
+    this.offsetY = 10;
+
+    this.lines = [];
+  }
+
+  // load lines and set narration to true
+  loadLines(arr) {
+    console.group("added new lines for son " + arr);
+    this.lines = arr;
+    if (this.lines !== null) {
+      currentlyTalkingToSon = true;
+    }
+  }
+
+  speak(top) {
+    if (!this.atSchool && currentlyTalkingToSon && talkingToSonIndex < this.lines.length) {
+      textBox(this.lines[talkingToSonIndex], top);
+    } else if (talkingToSonIndex >= this.lines.length) {
+      storyline.sonDialogue = false;
+      currentlyTalkingToSon = false;
+      talkingToSonIndex = 0;
+    }
+  }
+
+  setAttractionPoint(x,y) {
+    // allow buffer to prevent jitter
+    let buffer = 1;
+    
+    if (this.sprite.position.x > x + buffer) {
+      // currently to the right || move sprite to the left
+      this.sprite.velocity.x = -(speed - this.slowDown);
+    } else if (this.sprite.position.x < x - 10) {
+      // currently to the left || move sprite to the right
+      this.sprite.velocity.x = (speed - this.slowDown);
+    } else {
+      this.sprite.velocity.x = 0;
+    }
+
+    if (this.sprite.position.y > y + buffer) {
+      // currently down || move sprite up
+      this.sprite.velocity.y = -(speed - this.slowDown);
+    } else if (this.sprite.position.y < y - 10) {
+      // currently up || move sprite down
+      this.sprite.velocity.y = (speed - this.slowDown);
+    } else {
+      this.sprite.velocity.y = 0;
+    }
+  }
+
+  teleport() {
+    this.sprite.position.x = playerAvatar.sprite.position.x + this.offsetX;
+    this.sprite.position.y = playerAvatar.sprite.position.y + this.offsetY;
+  }
+
+  dropOff() {
+    this.atSchool = true;
+    this.following = false;
+    this.sprite.visible = false;
+  }
+
+  pickUp() {
+    this.atSchool = false;
+    this.following = true;
+    this.sprite.visible = true;
+    this.teleport();
+  }
+
+  // check if sprite is next to player
+  isBeside() {
+    return this.sprite.velocity.y + this.sprite.velocity.x === 0 && !this.atSchool;
+  }
+
+  draw() {
+    if (this.following) {
+      // Should follow to the right or left of the player avatar
+      if (direction === 2) {
+        this.offsetX = 55;
+      } else if (direction === 3) {
+        this.offsetX = - 55;
+      }
+      this.setAttractionPoint(playerAvatar.sprite.position.x + this.offsetX, playerAvatar.sprite.position.y + this.offsetY);
+      drawSprite(this.sprite);
+    }
+    this.speak(true);
+  } 
+}
+
 /*
   NPC Class
 */
@@ -180,6 +309,8 @@ class NPC extends Avatar {
     super(name, x, y);
     this.interactionsArray = [];
     this.doneInteracting = false;
+    this.canAdvance = true;
+    this.showHint = false;
 
     this.interIndex = 0;
     this.isActive = false;
@@ -232,29 +363,37 @@ class NPC extends Avatar {
   }
 
   displayInteractions(target) {
-    if(target.sprite.overlap(this.sprite) && interactionIndex < this.interactionsArray.length) {
-      currentlyInteracting = true;
+    if(target.sprite.overlap(this.sprite) && interactionIndex < this.interactionsArray.length && !currentlyNarrating) {
       if (this.doneInteracting) {
-        // if done interacting, show a hint of what to do next
-        textBox(storyline.currentHint, true);
+        if (this.showHint) {
+          // if done interacting, show a hint of what to do next
+          textBox(storyline.currentHint, true);
+        }
+        
       } else {
+        currentlyInteracting = true;
         textBox(this.interactionsArray[interactionIndex], true);
       }
       
     } else {
       // done interacting
-      if (!target.sprite.overlap(this.sprite) && interactionIndex >= this.interactionsArray.length) {
+      if (interactionIndex >= this.interactionsArray.length) {
+        // console.log("interaction index: " + interactionIndex);
         // advance story if this is the first time going through the interactions
         if (!this.doneInteracting) {
-          advanceStory = true;
+          advanceStory = this.canAdvance && true;
         }
         
         // make sure we only advance once
         this.doneInteracting = true;
-        interactionIndex = 0;
       }
       currentlyInteracting = false;
     }
+
+    if (!target.sprite.overlap(this.sprite) && this.doneInteracting) {
+      this.showHint = true;
+    }
+
   }
 
   displayInteractPrompt(target) {

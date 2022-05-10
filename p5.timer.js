@@ -15,13 +15,24 @@
 
 class Timer {
     // Store the duration and start the timer
-    constructor( _duration ) {
+    constructor( _duration , paused) {
       this.startTime = millis();
       this.duration = _duration;
+      this.paused = paused;
     }
     
     // just start the timer
     start() { 
+      this.startTime = millis();
+    }
+
+    pause() {
+      this.duration = this.getRemainingTime();
+      this.paused = true;
+    }
+
+    play() {
+      this.paused = false;
       this.startTime = millis();
     }
     
@@ -32,25 +43,29 @@ class Timer {
     
     // returns true if the timer is expired, e.g. if millis() is greater than startTime + duration
     expired() {
-      return (this.startTime + this.duration) < millis();
+      if (this.paused) {
+        return false;
+      }
+      return ((this.startTime + this.duration) < millis());
     }
     
     // returns remaining time in milliseconds, zero if timer is done
     getRemainingTime() {
-      if( this.expired() )
+      if( this.expired() ) {
         return 0;
+      } else if (this.paused) {
+        return this.duration;
+      }
+        
         
       return  (this.startTime + this.duration) - millis();
     }  
 
     // returns remaining time in milliseconds, zero if timer is done
     getRemainingTimeFormatted() {
-      if( this.expired() )
-        return 0;
-      
-      var timeRemaining = (this.startTime + this.duration) - millis();
+      var timeRemaining = this.getRemainingTime();
       timeRemaining = Number.parseFloat(timeRemaining/1000).toFixed(2);
-      return  timeRemaining;
+      return  timeRemaining.toString();
     }  
   
     // returns remaining % of timer, 0.0 through 1.0

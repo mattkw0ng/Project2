@@ -1,3 +1,4 @@
 index,character,interaction
 0,Volunteer,Volunteer: So you’re ready to start looking for a job? I actually know a restaurant on the left side of town that is hiring right now!
-0,Volunteer,Volunteer: Here. I made you a checklist of things you should probably do before you head over there. You can knock most of those out in the Library and if you need help with any of those things talk to the librarian there. Good luck!
+1,Volunteer,Volunteer: Here. I made you a checklist of things you should probably do before you head over there. You can knock most of those out in the Library and if you need help with any of those things talk to the librarian there.
+2,Volunteer,Volunteer: Let me know how everything goes with the interview! Good luck!

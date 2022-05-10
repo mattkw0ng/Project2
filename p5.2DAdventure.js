@@ -29,6 +29,7 @@ class AdventureManager {
         }
 
         this.playerSprite = null;
+        this.playerSprite2 = null;
         this.clickableArray = null;
     }
 
@@ -84,6 +85,9 @@ class AdventureManager {
     // from the p5.play class
     setPlayerSprite(s) {
         this.playerSprite = s;
+    }
+    setPlayerSprite2(s) {
+        this.playerSprite2 = s;
     }
 
     // clickable manager for turning visibility on/off for buttons based on their states
@@ -286,7 +290,9 @@ class AdventureManager {
                         this.changeState(this.interactionTable.getString(i, 'NextState') );
                         stateChanged = true; 
 
-                        this.adjustSpriteForRoom(prevState);
+                        this.adjustSpriteForRoom(prevState, this.playerSprite2);
+                        this.adjustSpriteForRoom(prevState, this.playerSprite);
+                        
                         break;
                     }
                 }
@@ -321,34 +327,42 @@ class AdventureManager {
         return "";
     }
 
-    adjustSpriteForRoom(prevState) {
-        if( this.playerSprite === null ) {
+    adjustSpriteForRoom(prevState, currSprite) {
+        if( currSprite === null ) {
             return;
         }
 
+        let distanceX = this.playerSprite.position.x - currSprite.position.x;
+        let distanceY = this.playerSprite.position.y - currSprite.position.y;
+    
         if( prevState == "Library") {
-            this.playerSprite.position.x = 580;
-            this.playerSprite.position.y = 600;
+            currSprite.position.x = 580;
+            currSprite.position.y = 544;
         } else if (prevState == "Shelter") {
-            this.playerSprite.position.x = 455;
-            this.playerSprite.position.y = 650;
-        } else if (prevState == "Grill") {
-            this.playerSprite.position.x = 293;
-            this.playerSprite.position.y = 663;
+            currSprite.position.x = 455;
+            currSprite.position.y = 650;
+        } else if (prevState == "Grill" || prevState == "Restaurant") {
+            currSprite.position.x = 293;
+            currSprite.position.y = 663;
         }
-
+    
         if( this.playerSprite.position.x < -1 ) {
-            this.playerSprite.position.x = width;
+            console.log("moving sprite");
+            currSprite.position.x = width;
         }
         else if( this.playerSprite.position.x > width ) {
-            this.playerSprite.position.x = 0;
+            currSprite.position.x = 0;
         }
         else if( this.playerSprite.position.y < -1 ) {
-            this.playerSprite.position.y = height;
+            currSprite.position.y = height;
         }
         else if( this.playerSprite.position.y > height ) {
-            this.playerSprite.position.y = 0;
+            currSprite.position.y = 0;
         }
+
+        // adjust position based on previous offset from player sprite
+        currSprite.position.x -= distanceX;
+        currSprite.position.y -= distanceY;
     }
 
     // no room, constrain to edges

@@ -18,6 +18,9 @@ var adventureManager;
 
 // p5.play
 var playerAvatar;
+var sonAvatar;
+var narrator;
+
 // 0 = up | 1 = down | 2 = left | 3 = right
 var direction = 1;
 var standing_imgs = [];
@@ -29,6 +32,7 @@ var clickablesManager;    // the manager class
 var clickables;           // an array of clickable objects
 
 // keycods for W-A-S-D
+var movementLocked = false;
 const W_KEY = 87;
 const S_KEY = 83;
 const D_KEY = 68;
@@ -43,23 +47,37 @@ var maxTexts = 2;
 // globals for selection box
 var selectedChoiceIndex = 0;
 var maxChoices = 2;
-var submitSelection = true;
+var submitSelection = false;
+var loadingScreen;
 
 // globals for interactionCSVs
 var currentlyInteracting = false;
-var multipleInteractions = false;
+var currentlyNarrating = false;
+var currentlyTalkingToSon = false;
 var interactionIndex = 0;
+var narrationIndex = 0;
+var talkingToSonIndex = 0;
 var librarianTables = [];
+var librarianIndex = 0
 var volunteerTables = [];
+var volunteerIndex = 0
+var managerTables = [];
+var managerIndex = 0;
 
 // globals for Quest and Storyline;
 var storyline;
 var advanceStory = false;
+var dayComplete = false;
 var questNum = 0;
+var quiz;
+
+var jumpTo = 0;
+
 
 // Allocate Adventure Manager with states table and interaction tables
 function preload() {
   storyline = new Storyline();
+  quiz = new Quiz();
   //--- TEMPLATE STUFF: Don't change
   clickablesManager = new ClickableManager('data/clickableLayout.csv');
   adventureManager = new AdventureManager('data/adventureStates.csv', 'data/interactionTable.csv', 'data/clickableLayout.csv');
@@ -72,8 +90,15 @@ function preload() {
   librarianTables[1] = loadTable('data/librarianQuest2.csv', 'csv', 'header');
   librarianTables[2] = loadTable('data/librarianQuest2b.csv', 'csv', 'header');
 
-  volunteerTables[0] = loadTable('data/volunteerQuest1.csv', 'csv', 'header')
-  volunteerTables[1] = loadTable('data/volunteerQuest2.csv', 'csv', 'header')
+  volunteerTables[0] = loadTable('data/volunteerQuest1.csv', 'csv', 'header');
+  volunteerTables[1] = loadTable('data/volunteerQuest2.csv', 'csv', 'header');
+  volunteerTables[2] = loadTable('data/volunteerQuest2b.csv', 'csv', 'header');
+
+  managerTables[0] = loadTable('data/managerQuest1.csv', 'csv', 'header');
+  managerTables[1] = loadTable('data/managerQuest2.csv', 'csv', 'header');
+  managerTables[2] = loadTable('data/managerQuest2b.csv', 'csv', 'header');
+  managerTables[3] = loadTable('data/managerQuest2c.csv', 'csv', 'header');
+  managerTables[4] = loadTable('data/managerQuest2d.csv', 'csv', 'header');
 }
 
 // Setup the adventure manager
@@ -87,6 +112,10 @@ function setup() {
 
   // MODIFY THIS: change to initial position
   playerAvatar = new Avatar("Player", 640, 400);
+  sonAvatar = new Son("Son", 665, 400);
+  sonAvatar.dropOff(); // son starts off at school
+  narrator = new Narrator();
+  loadingScreen = new LoadingScreen(0.1);
    
   // MODIFY THIS: to make your avatar go faster or slower
   playerAvatar.setMaxSpeed(20);
@@ -102,6 +131,7 @@ function setup() {
   //--- TEMPLATE STUFF: Don't change
   // use this to track movement from toom to room in adventureManager.draw()
   adventureManager.setPlayerSprite(playerAvatar.sprite);
+  adventureManager.setPlayerSprite2(sonAvatar.sprite);
 
   // this is optional but will manage turning visibility of buttons on/off
   // based on the state name in the clickableLayout
@@ -119,38 +149,86 @@ function setup() {
 
 // Adventure manager handles it all!
 function draw() {
-  //--- TEMPLATE STUFF: Don't change
   // draws background rooms and handles movement from one to another
   adventureManager.draw();
 
   // draw the p5.clickables, in front of the mazes but behind the sprites 
   clickablesManager.draw();
-  //---
 
-  //--- MODIFY THESE CONDITONALS
   // No avatar for Splash screen or Instructions screen
   if( adventureManager.getStateName() !== "Splash" && 
       adventureManager.getStateName() !== "Instructions" ) {
-      
-    //--- TEMPLATE STUFF: Don't change    
-    // responds to keydowns
     checkMovementAdvanced();
-
-    // this is a function of p5.play, not of this sketch
     drawSprite(playerAvatar.sprite);
-    //--
+    sonAvatar.draw();
   } 
-  let positionText = "x: " + mouseX + " y: " + mouseY;
-  text(positionText,50,50);
-  storyline.checkForAdvances();  
 
-  if (keyIsDown(32)) {
-    if (currentlyInteracting) {
-      interactionIndex ++;
-      console.log(interactionIndex);
+  if (!loadingScreen.active) {
+    narrator.speak();
+  }
+  
+  devModeFunctions();
+
+  storyline.checkDayCycle();
+  storyline.checkForAdvances();  
+  
+
+  loadingScreen.draw();
+
+  // special function to advance storyline 
+  storyline.advanceStory(jumpTo);
+}
+
+// Hacks for quicker navigation during development
+function devModeFunctions() {
+  
+  // pressing 'control' gives access to devmode functions
+  if (keyIsDown(17)) {
+    // Display some useful data
+    devInfoDisplay();
+    
+    // 't' teleports to given state
+    if (keyIsDown(84)) {
+      let newState = prompt("teleport to: ");
+      adventureManager.changeState(newState);
+    }
+
+    // '.' allows you to skip through the story
+    if (keyIsDown(190)) {
+      quiz.passed = true;
+      jumpTo = prompt("Jump to state:");
+    }
+
+    // execute a command
+    if (keyIsDown(191)) {
+      let command = prompt("Enter command");
+      eval(command);
+    }
+
+    // ' ' Skips through dialogue
+    if (keyIsDown(32)) {
+      if (currentlyInteracting) {
+        interactionIndex ++;
+        console.log(interactionIndex);
+      }
     }
   }
 
+  function devInfoDisplay() {
+    rect(0,0,150,100);
+    let positionText = "mouse x: " + mouseX + " y: " + mouseY;
+    text(positionText,20,25);
+    let playerPositionText = "player x: " + playerAvatar.sprite.position.x + " y: " + playerAvatar.sprite.position.y;
+    text(playerPositionText,20,40);
+    let sonPositionText = "son x: " + sonAvatar.sprite.position.x + " y: " + sonAvatar.sprite.position.y;
+    text(sonPositionText,20,55);
+    let storylineIndex = "storyline progress: " + (storyline.storyIndex - 1);
+    text(storylineIndex,20,70);
+    let currDay = "current day " + storyline.currentDay;
+    text(currDay,20,85);
+  }
+
+  // 'SHIFT' increases player speed
   if (keyIsDown(16)) {
     this.speed = 12;
   } else {
@@ -164,6 +242,10 @@ function resetState() {
 }
 
 function checkMovementAdvanced() {
+  if(movementLocked) {
+    //don't do anything
+    return;
+  }
   // Check x movement
   if(keyIsDown(D_KEY)) {
     // D
@@ -249,7 +331,13 @@ function mouseReleased() {
     textIndex ++;
     if (currentlyInteracting) {
       interactionIndex ++;
-      console.log(interactionIndex);
+      console.log("interacting: " + interactionIndex);
+    } else if (currentlyNarrating) {
+      narrationIndex ++;
+      console.log("narrating: " + narrationIndex);
+    } else if (currentlyTalkingToSon && !sonAvatar.atSchool) {
+      talkingToSonIndex ++;
+      console.log("talking to son: " + talkingToSonIndex);
     }
   }
 }
@@ -302,15 +390,15 @@ function selectTextBox( prompt, choices, selected, leftAlign) {
 
   let boxHeight = 95 + (choices.length * 20);
 
-  rect(xPos, 50, 150, boxHeight, 10);
-  text(prompt, xPos + 20, 70, 110, 160);
+  rect(xPos, 50, 500, boxHeight, 10);
+  text(prompt, xPos + 20, 70, 460, 160);
   for( let i = 0 ; i < choices.length ; i ++) {
     var buffer = choices[i];
     if (selected === i) {
       buffer = buffer.concat(" <");
     }
 
-    text(buffer , xPos + 20, 120  + (i * 20) , 110, 160);
+    text(buffer , xPos + 20, 120  + (i * 20) , 460, 160);
   }
   pop();
   
@@ -407,10 +495,13 @@ class LibraryExterior extends PNGRoom {
   draw() {
     super.draw();
     drawSprite(this.door.sprite);
-    playerAvatar.sprite.overlap(this.door.sprite, this.doorCollision);
+    if (playerAvatar.sprite.overlapPoint(580, 490)) {
+      //console.log("x: "+ this.door.sprite.position.x + " y: " + this.door.sprite.position.y)
+      this.doorCollision();
+    };
   }
 
-  doorCollision(spriteA, spriteB) {
+  doorCollision() {
     // teleport to library
     playerAvatar.sprite.position.x = width/2;
     playerAvatar.sprite.position.y = height;
@@ -422,7 +513,7 @@ class LibraryExterior extends PNGRoom {
 class LibraryInterior extends PNGRoom {
   preload() {
     this.librarianDesk = new NPC("Librarian", 190, 700);
-    this.librarianDesk.loadInteractions(librarianTables[questNum]);
+    this.librarianDesk.loadInteractions(librarianTables[librarianIndex]);
 
     this.computer = new NPC("Computer", 623, 322);
     this.computer.addInteractions(["Booting up", "...", "A few moments later", "I think this looks good! I hope the manager likes it."]);
@@ -433,13 +524,16 @@ class LibraryInterior extends PNGRoom {
 
   draw() {
     super.draw();
-    drawSprite(this.librarianDesk.sprite);
+    
     
     if (storyline.storyIndex === 4) {
+      drawSprite(this.computer.sprite);
       this.computer.displayInteractions(playerAvatar);
     } else if (storyline.storyIndex === 5) {
+      drawSprite(this.shelf.sprite);
       this.shelf.displayInteractions(playerAvatar);
     } else {
+      drawSprite(this.librarianDesk.sprite);
       this.librarianDesk.displayInteractions(playerAvatar);
     }
     
@@ -477,17 +571,22 @@ class ShelterExterior extends PNGRoom {
 class ShelterInterior extends PNGRoom {
   preload() {
     this.volunteerDesk = new NPC("Volunteer", 190, 700);
-    this.volunteerDesk.loadInteractions(volunteerTables[questNum]);
+    this.bed = new Bed(580,550);
+    this.volunteerDesk.loadInteractions(volunteerTables[volunteerIndex]);
   }
 
   draw() {
     super.draw();
     drawSprite(this.volunteerDesk.sprite);
     this.volunteerDesk.displayInteractions(playerAvatar);
+    drawSprite(this.bed.sprite);
+    this.bed.checkCollision(playerAvatar.sprite);
+    
   }
 }
 
-// 290 610
+// -------- Restaurant ---------
+
 class RestaurantExterior extends PNGRoom {
   preload() {
     // door sprite
@@ -501,36 +600,136 @@ class RestaurantExterior extends PNGRoom {
   }
 
   doorCollision(spriteA, spriteB) {
+    if (storyline.restaurantLocked) {
+      textBox("I don't have anything to do here right now", false);
+      return;
+    } else if (!sonAvatar.atSchool) {
+      textBox("I should probably drop my son off at school first", false);
+      return;
+    }
     // teleport to library if youve talked to the librarian
-    if (false) {
-      textBox("Hmm this door is locked", false);
+    playerAvatar.sprite.position.x = width/2;
+    playerAvatar.sprite.position.y = height;
+    console.log("moved to : " + height + ", " + width/2);
+    if (storyline.dishMinigame && !storyline.workedToday) {
+      adventureManager.changeState("DishMinigame");
+    } else if (storyline.grillMinigame && !storyline.workedToday) {
+      adventureManager.changeState("GrillMinigame");
     } else {
-      playerAvatar.sprite.position.x = width/2;
-      playerAvatar.sprite.position.y = height;
-      console.log("moved to : " + height + ", " + width/2);
-      adventureManager.changeState("Grill");
+      adventureManager.changeState("Restaurant");
     }
     
   }
 }
 
-
-class DishMinigame extends PNGRoom {
+class RestaurantInterior extends PNGRoom {
   preload() {
-    this.plate = new Dish(3);
+    this.manager = new NPC("Manager", 300, 522);
+    this.manager.loadInteractions(managerTables[managerIndex]);
   }
 
   draw() {
-    this.plate.draw();
-    this.plate.checkCollisions();
+    this.manager.canAdvance = !storyline.managerLocked;
+    super.draw();
+    drawSprite(this.manager.sprite);
+    if (storyline.displayQuiz) {
+      quiz.start();
+    } else {
+      this.manager.displayInteractions(playerAvatar);
+    }
+  }
+}
+
+// -------- School --------- 
+
+class School extends PNGRoom {
+  preload() {
+    // door sprite
+    //this.door = new DoorSprite("School", 292, 580, 1);
+  }
+
+  draw() {
+    super.draw();
+    // drawSprite(this.door.sprite);
+    if (playerAvatar.sprite.overlapPoint(750,450)) {
+      this.doorCollision();
+    }
+  }
+
+  doorCollision() {
+    if (sonAvatar.isBeside() && !sonAvatar.atSchool && !storyline.workedToday) {
+      // if the son is next to the player at the door of the school, drop him off
+      sonAvatar.dropOff();
+      narrator.loadLines(["Rosie: Have fun at school today!"]);
+    } else if (sonAvatar.atSchool && storyline.workedToday) {
+      // if the son is currently at school and the player already worked today, pick him up
+      sonAvatar.pickUp();
+      if (!storyline.sonDialogue) {
+        // if there is no special dialogue, show this simple interaction
+        sonAvatar.loadLines(["Rosie: How was school today?", "Son: It was alright..."]);
+      }
+      
+    }
+  }
+}
+
+// -------- Store --------- 
+
+class Store extends PNGRoom {
+  preload() {
+    this.shopped = false;
+  }
+
+  draw() {
+    super.draw();
+    // drawSprite(this.door.sprite);
+    if (playerAvatar.sprite.overlapPoint(675,550)) {
+      this.doorCollision();
+    }
+  }
+
+  doorCollision() {
+    if (!storyline.storeLocked && !this.shopped) {
+      textBox("Enter store? (press [e] to enter");
+      if(keyIsDown(69)) {
+        narrator.loadLines(["Rosie: Hmm let's check out the boy's section...", "Rosie: How about this shirt?", "Son: I'm not into Minecraft anymore Mom!", "Rosie: Okay okay, my bad! How about this one then?", "Son: ... Can I get this one instead?", "Rosie: Alrighty, as long as you're happy with it!", "Son: Yeah!", "Rosie: Okay let't get going then.", "..."]);
+        this.shopped = true;
+      }
+    } else if (currentlyNarrating && this.shopped)  {
+      // hide avatars while "shopping"
+      playerAvatar.sprite.visible = false;
+      sonAvatar.sprite.visible = false;
+      movementLocked = true;
+    } else {
+      textBox("Nothing to do here right now...");
+      playerAvatar.sprite.visible = true;
+      sonAvatar.sprite.visible = true;
+      movementLocked = false;
+    }
+  }
+}
+
+// -------- Minigames --------- 
+
+class DishMinigame extends PNGRoom {
+  preload() {
+    this.game = new DishWasher();
+  }
+
+  draw() {
+    this.game.draw();
+    if (this.game.recordedScore) {
+      // when the game is over, move outside;
+      this.exitGame();
+    }
   }
 
   exitGame() {
-    // teleport to library
-    playerAvatar.sprite.position.x = width/2;
-    playerAvatar.sprite.position.y = height;
+    // move sprite outside
+    playerAvatar.sprite.position.x = 293;
+    playerAvatar.sprite.position.y = 663;
     console.log("moved to : " + height + ", " + width/2);
-    adventureManager.changeState("Map4");
+    adventureManager.changeState("Map1");
   }
 }
 
@@ -547,13 +746,18 @@ class GrillMinigame extends PNGRoom {
     super.draw();
     // Add your code here
     this.grill.draw();
+    if (this.grill.recordedScore) {
+      // when the game is over, move outside;
+      this.exitGame();
+    }
   }
 
   exitGame() {
+    console.log("Exiting Game");
     // teleport to library
     playerAvatar.sprite.position.x = width/2;
     playerAvatar.sprite.position.y = height;
-    console.log("moved to : " + height + ", " + width/2);
-    adventureManager.changeState("Map4");
+    // console.log("moved to : " + height + ", " + width/2);
+    adventureManager.changeState("Map1");
   }
 }
