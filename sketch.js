@@ -66,10 +66,12 @@ var managerIndex = 0;
 
 // globals for Quest and Storyline;
 var storyline;
+var inventory;
 var advanceStory = false;
 var dayComplete = false;
 var questNum = 0;
 var quiz;
+var gameOver = false;
 
 var jumpTo = 0;
 
@@ -93,12 +95,15 @@ function preload() {
   volunteerTables[0] = loadTable('data/volunteerQuest1.csv', 'csv', 'header');
   volunteerTables[1] = loadTable('data/volunteerQuest2.csv', 'csv', 'header');
   volunteerTables[2] = loadTable('data/volunteerQuest2b.csv', 'csv', 'header');
+  volunteerTables[3] = loadTable('data/volunteerQuest2c.csv', 'csv', 'header');
 
   managerTables[0] = loadTable('data/managerQuest1.csv', 'csv', 'header');
   managerTables[1] = loadTable('data/managerQuest2.csv', 'csv', 'header');
   managerTables[2] = loadTable('data/managerQuest2b.csv', 'csv', 'header');
   managerTables[3] = loadTable('data/managerQuest2c.csv', 'csv', 'header');
   managerTables[4] = loadTable('data/managerQuest2d.csv', 'csv', 'header');
+
+  inventory = new Inventory();
 }
 
 // Setup the adventure manager
@@ -165,13 +170,13 @@ function draw() {
 
   if (!loadingScreen.active) {
     narrator.speak();
+    inventory.draw();
   }
   
   devModeFunctions();
 
   storyline.checkDayCycle();
   storyline.checkForAdvances();  
-  
 
   loadingScreen.draw();
 
@@ -368,19 +373,21 @@ function textBox( string , top) {
     return;
   }
   push();
-  
+  fill('rgba(255,255,255, 0.95)');
   textSize(16);
   let yPos = 650;
   if (top) {
     yPos = 50
   }
   rect(100, yPos, 800, 100, 10);
+  fill(0);
   text(string, 120, yPos + 20, 760, 60);
   pop();
 }
 
 function selectTextBox( prompt, choices, selected, leftAlign) {
   push();
+  fill('rgba(255,255,255, 0.95)')
   textSize(16);
 
   let xPos = 800;
@@ -391,6 +398,7 @@ function selectTextBox( prompt, choices, selected, leftAlign) {
   let boxHeight = 95 + (choices.length * 20);
 
   rect(xPos, 50, 500, boxHeight, 10);
+  fill(0);
   text(prompt, xPos + 20, 70, 460, 160);
   for( let i = 0 ; i < choices.length ; i ++) {
     var buffer = choices[i];
@@ -690,7 +698,7 @@ class Store extends PNGRoom {
 
   doorCollision() {
     if (!storyline.storeLocked && !this.shopped) {
-      textBox("Enter store? (press [e] to enter");
+      textBox("Enter store? (press [e] to enter)");
       if(keyIsDown(69)) {
         narrator.loadLines(["Rosie: Hmm let's check out the boy's section...", "Rosie: How about this shirt?", "Son: I'm not into Minecraft anymore Mom!", "Rosie: Okay okay, my bad! How about this one then?", "Son: ... Can I get this one instead?", "Rosie: Alrighty, as long as you're happy with it!", "Son: Yeah!", "Rosie: Okay let't get going then.", "..."]);
         this.shopped = true;
@@ -705,6 +713,47 @@ class Store extends PNGRoom {
       playerAvatar.sprite.visible = true;
       sonAvatar.sprite.visible = true;
       movementLocked = false;
+    }
+  }
+}
+
+// -------- Home --------- 
+
+class Home extends PNGRoom {
+  preload() {
+    this.entered = false;
+  }
+
+  draw() {
+    super.draw();
+    // drawSprite(this.door.sprite);
+    if (playerAvatar.sprite.overlapPoint(605,585)) {
+      this.doorCollision();
+    }
+
+    if (!currentlyNarrating && this.entered && !gameOver) {
+      // done with narrators comments
+      console.log("~ fin ~");
+      gameOver = true;
+      loadingScreen.endGame();
+
+      // TODO: Creator's note & endscreen
+    }
+  }
+
+  doorCollision() {
+    if (!storyline.houseLocked && !this.entered) {
+      textBox("Finish Game? (press [e] to enter)");
+      if(keyIsDown(69)) {
+        inventory.paperwork.inInventory = false;
+        narrator.loadLines(["Landlord: I heard you have some paperwork for me?", "Rosie: Yup! Here it is.", "...", "Landlord: Alright, everything looks good! Here are the keys to your new apartment!", "...", "Narrator: And that's a wrap!", "Narrator: Thank you for playing, I hope you enjoyed this little adventure!"]);
+        this.entered = true;
+        playerAvatar.sprite.visible = false;
+        sonAvatar.sprite.visible = false;
+        movementLocked = true;
+      }
+    } else if (!gameOver) {
+      textBox("Nothing to do here right now...");
     }
   }
 }

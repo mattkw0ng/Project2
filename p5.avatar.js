@@ -134,16 +134,29 @@ class Avatar  {
 }
 
 // 2D sprite which we will be able to pick up and dropp
-class StaticSprite {
+class Item {
   // call upon preload() of p5.js to acutally load the image
-  constructor(name, x, y, pngPath) {
-    this.name = name;
-    this.img = loadImage(pngPath);
+  constructor(x, y, pngPath) {
+    // if (pngPath !== null) {
+    //   this.img = loadImage(pngPath);
+    // }
     this.sprite = createSprite(x, y);
+    this.sprite.mouseActive;
+    this.sprite.setDefaultCollider();
+    this.inInventory = false;
+    this.isHovered = false;
   }
 
   setup() {
     this.sprite.addImage('static', this.img );
+  }
+
+  draw() {
+    if (this.inInventory) {
+      drawSprite(this.sprite);
+      this.sprite.mouseUpdate();
+      this.isHovered = this.sprite.mouseIsOver && this.inInventory;
+    }
   }
 }
 

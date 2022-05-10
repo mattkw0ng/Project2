@@ -5,7 +5,7 @@ ID,StateName,ClassName,PNGFilename,CollisionFilename
 3,Map2,Store,assets/map_2.png,assets/map_2_cl.csv,
 4,Map3,ShelterExterior,assets/map_3.png,assets/map_3_cl.csv,
 5,Map4,School,assets/map_4.png,assets/map_4_cl.csv,
-6,Map5,PNGRoom,assets/map_5.png,assets/map_5_cl.csv,
+6,Map5,Home,assets/map_5.png,assets/map_5_cl.csv,
 7,Map6,LibraryExterior,assets/map_6.png,assets/map_6_cl.csv,
 8,Restaurant,RestaurantInterior,assets/Restaurant.png,
 9,Library,LibraryInterior,assets/Library.png,

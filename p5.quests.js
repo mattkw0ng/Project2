@@ -7,6 +7,7 @@ class LoadingScreen {
         this.loadingScreenSpeed = loadSpeed;
         this.active = false;
         this.pauseTime = 2;
+        this.gameOver = false;
     }
 
     start() {
@@ -14,6 +15,13 @@ class LoadingScreen {
         this.stopDegree = 0;
         this.startDegree = 0;
         this.pauseTime = 2;
+    }
+
+    endGame() {
+        this.active = true;
+        this.stopDegree = 0;
+        this.startDegree = 0;
+        this.gameOver = true;
     }
 
     update() {
@@ -26,7 +34,7 @@ class LoadingScreen {
         } else if (this.pauseTime > 0) {
             // pauses for a brief moment
             this.pauseTime -= this.loadingScreenSpeed;
-        } else {
+        } else if (!this.gameOver){
             // end: starts shrinking the circle
             this.startDegree += this.loadingScreenSpeed;
         }
@@ -134,8 +142,10 @@ class Quiz {
 
 class Inventory {
     constructor() {
-        this.flashDrive = false;
-        
+        this.flashDrive = new Item(925,775);
+        this.book = new Item(800,775);
+        this.resume = new Item(925,775);
+        this.paperwork = new Item(925,775);
     }
 
     preload() {
@@ -143,7 +153,29 @@ class Inventory {
     }
 
     draw() {
+        this.flashDrive.draw();
+        this.book.draw();
+        this.resume.draw();
+        this.paperwork.draw();
+        if (!currentlyInteracting && !currentlyNarrating && !currentlyTalkingToSon) {
+            this.checkHover();
+        }
+    }
 
+    checkHover() {
+        if (this.flashDrive.isHovered) {
+            console.log("showing flash drive");
+            textBox("A flash drive containing Rosie's resume. Talk to the librarian to get it printed out.", true);
+        } else if (this.book.isHovered) {
+            console.log("showing book");
+            textBox("[Temporary] A book containing the answers to the quiz", true);
+        } else if (this.resume.isHovered) {
+            console.log("showing resume");
+            textBox("A copy of Rosie's resume. Give it to the manager so you can interview for the job.", true);
+        } else if (this.paperwork.isHovered) {
+            console.log("showing paperwork");
+            textBox("Signed lease agreement for Rosie's new apartment. Hand it to the Landlord to finish the game.", true);
+        }
     }
 }
 
@@ -225,6 +257,7 @@ class Storyline {
                     // Write your resume
                     this.currentHint = "Wait! I think there is one other thing I need to do";
                     console.log("Need to find the book");
+                    inventory.flashDrive.inInventory = true;
                     break;
                 case 5:
                     // Collect your book
@@ -232,6 +265,7 @@ class Storyline {
                     librarianIndex  = 2;
                     adventureManager.reload("Library");
                     console.log("Getting Resume printed and books checked out");
+                    inventory.book.inInventory = true;
                     break;
                 case 6:
                     // Talk to Librarian again to check book out and print resume
@@ -240,10 +274,13 @@ class Storyline {
                     adventureManager.reload("Restaurant");
                     this.managerLocked = false;
                     console.log("Time for the interview");
+                    inventory.flashDrive.inInventory = false;
+                    inventory.resume.inInventory = true;
                     break;
                 case 7:
                     // Head to restaurant to talk to manager
                     console.log("Starting quiz");
+                    inventory.resume.inInventory = false;
                     this.displayQuiz = true;
                     break;
                 case 8:
@@ -348,9 +385,10 @@ class Storyline {
                     break;
                 case 17:
                     // Final scene : Enter the house and ROLL CREDITS
-                    console.log("-- Final Scene --")
+                    console.log("-- Final Scene --");
+                    inventory.paperwork.inInventory = true;
                     this.houseLocked = false;
-                    
+
                 default:
                     console.log("Error: no more story advances | questnum: " + questNum + " storyIndex: " + this.storyIndex);
             }
