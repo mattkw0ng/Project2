@@ -43,6 +43,8 @@ var speed = 7;
 // globals for text box
 var textIndex = 0;
 var maxTexts = 2;
+var bodyFont;
+var titleFont;
 
 // globals for selection box
 var selectedChoiceIndex = 0;
@@ -65,6 +67,7 @@ var managerTables = [];
 var managerIndex = 0;
 
 // globals for Quest and Storyline;
+var tutorial = false;
 var storyline;
 var inventory;
 var advanceStory = false;
@@ -75,6 +78,12 @@ var gameOver = false;
 
 var jumpTo = 0;
 
+//globals for minigames
+var burgerImages = [];
+var stain;
+var itemImages = [];
+var star;
+
 
 // Allocate Adventure Manager with states table and interaction tables
 function preload() {
@@ -84,9 +93,10 @@ function preload() {
   clickablesManager = new ClickableManager('data/clickableLayout.csv');
   adventureManager = new AdventureManager('data/adventureStates.csv', 'data/interactionTable.csv', 'data/clickableLayout.csv');
   //---
-  standing_imgs[0] = loadImage('assets/walk-down.png');
-  standing_imgs[1] = loadImage('assets/walk-up.png');
-  standing_imgs[2] = loadImage('assets/walk-side.png');
+  standing_imgs[0] = loadImage('assets/walk-down-01.png');
+  standing_imgs[1] = loadImage('assets/walk-up-01.png');
+  standing_imgs[2] = loadImage('assets/walk-side-01.png');
+  standing_imgs[3] = loadImage('assets/son-01.png');
   //---
   librarianTables[0] = loadTable('data/librarianQuest1.csv', 'csv', 'header');
   librarianTables[1] = loadTable('data/librarianQuest2.csv', 'csv', 'header');
@@ -103,7 +113,23 @@ function preload() {
   managerTables[3] = loadTable('data/managerQuest2c.csv', 'csv', 'header');
   managerTables[4] = loadTable('data/managerQuest2d.csv', 'csv', 'header');
 
+  burgerImages[0] = loadImage('assets/burger-raw.png');
+  burgerImages[1] = loadImage('assets/burger-half-cooked.png');
+  burgerImages[2] = loadImage('assets/burger-cooked.png');
+  burgerImages[3] = loadImage('assets/burger-burnt.png');
+
+  stain = loadImage('assets/stain.png');
+
+  itemImages[0] = loadImage('assets/flashdrive.png');
+  itemImages[1] = loadImage('assets/book.png');
+  itemImages[2] = loadImage('assets/resume.png');
+  itemImages[3] = loadImage('assets/lease.png');
+
+  star = loadImage('assets/interact-symbol.png');
+
   inventory = new Inventory();
+  bodyFont = loadFont("fonts/MinecraftRegular-Bmg3.otf");
+  titleFont = loadFont("fonts/Krungthep.ttf");
 }
 
 // Setup the adventure manager
@@ -133,6 +159,9 @@ function setup() {
   playerAvatar.sprite.addImage('standing-side', standing_imgs[2]);
   playerAvatar.sprite.addAnimation('walk-side', 'assets/walk-side-01.png', 'assets/walk-side-04.png')
 
+  sonAvatar.sprite.addImage('standing', standing_imgs[3]);
+  sonAvatar.sprite.addAnimation('walking', 'assets/son-01.png', 'assets/son-04.png');
+
   //--- TEMPLATE STUFF: Don't change
   // use this to track movement from toom to room in adventureManager.draw()
   adventureManager.setPlayerSprite(playerAvatar.sprite);
@@ -146,7 +175,7 @@ function setup() {
   adventureManager.setup();
 
 
-  adventureManager.changeState("Map5");
+  // adventureManager.changeState("DishMinigame");
   // call OUR function to setup additional information about the p5.clickables
   // that are not in the array 
   setupClickables(); 
@@ -162,7 +191,8 @@ function draw() {
 
   // No avatar for Splash screen or Instructions screen
   if( adventureManager.getStateName() !== "Splash" && 
-      adventureManager.getStateName() !== "Instructions" ) {
+      adventureManager.getStateName() !== "Background" && 
+      adventureManager.getStateName() !== "Goal"){
     checkMovementAdvanced();
     drawSprite(playerAvatar.sprite);
     sonAvatar.draw();
@@ -255,6 +285,7 @@ function checkMovementAdvanced() {
   if(keyIsDown(D_KEY)) {
     // D
     playerAvatar.sprite.mirrorX(1);
+    sonAvatar.sprite.mirrorX(1);
     playerAvatar.sprite.changeAnimation('walk-side');
     direction = 3;
     playerAvatar.sprite.velocity.x = speed;
@@ -262,6 +293,7 @@ function checkMovementAdvanced() {
   else if(keyIsDown(A_KEY)) {
     // A
     playerAvatar.sprite.mirrorX(-1);
+    sonAvatar.sprite.mirrorX(-1);
     playerAvatar.sprite.changeAnimation('walk-side');
     direction = 2;
     playerAvatar.sprite.velocity.x = -speed;
@@ -331,7 +363,17 @@ function checkMovement() {
 // want to do it differently
 function mouseReleased() {
   if( adventureManager.getStateName() === "Splash") {
-    adventureManager.changeState("Instructions");
+    adventureManager.changeState("Background");
+  } else if( adventureManager.getStateName() === "Background") {
+    adventureManager.changeState("Tutorial");
+    playerAvatar.sprite.position.x = 170;
+    playerAvatar.sprite.position.y = 645;
+  } else if( adventureManager.getStateName() === "Goal") {
+    adventureManager.changeState("Map5");
+  } else if( adventureManager.getStateName() === "DishTutorial") {
+    adventureManager.changeState("DishMinigame");
+  } else if( adventureManager.getStateName() === "GrillTutorial") {
+    adventureManager.changeState("GrillMinigame");
   } else {
     textIndex ++;
     if (currentlyInteracting) {
@@ -373,23 +415,24 @@ function textBox( string , top) {
     return;
   }
   push();
-  fill('rgba(255,255,255, 0.95)');
-  textSize(16);
+  fill('rgba(255,255,255, 0.98)');
+  textSize(18);
+  textFont(bodyFont);
   let yPos = 650;
   if (top) {
     yPos = 50
   }
   rect(100, yPos, 800, 100, 10);
-  fill(0);
+  fill('#707070');
   text(string, 120, yPos + 20, 760, 60);
   pop();
 }
 
 function selectTextBox( prompt, choices, selected, leftAlign) {
   push();
-  fill('rgba(255,255,255, 0.95)')
-  textSize(16);
-
+  fill('rgba(255,255,255, 0.98)')
+  textSize(18);
+  textFont(bodyFont);
   let xPos = 800;
   if (leftAlign) {
     xPos = 50;
@@ -398,7 +441,7 @@ function selectTextBox( prompt, choices, selected, leftAlign) {
   let boxHeight = 95 + (choices.length * 20);
 
   rect(xPos, 50, 500, boxHeight, 10);
-  fill(0);
+  fill('#707070');
   text(prompt, xPos + 20, 70, 460, 160);
   for( let i = 0 ; i < choices.length ; i ++) {
     var buffer = choices[i];
@@ -491,6 +534,31 @@ class TemplateScreen extends PNGRoom {
   }
 }
 
+class TutorialRoom extends PNGRoom {
+  preload() {
+    this.starSprite = createSprite(750,650);
+    this.starSprite.addImage("static", star);
+  }
+
+  draw() {
+    super.draw();
+    drawSprite(this.starSprite);
+    playerAvatar.sprite.overlap(this.starSprite, this.handleCollision);
+    console.log(tutorial);
+    if (tutorial && !currentlyNarrating) {
+      console.log("Moving on");
+      adventureManager.changeState("Goal");
+    }
+  }
+
+  handleCollision() {
+    if (!tutorial) {
+      console.log("Touched the star");
+      narrator.loadLines(["Narrator: To advance through this dialogue, click your mouse!", "Narrator: Yup just like that! ", "Narrator: Seems like you got the hang of it, so let's move on."]);
+      tutorial = true;
+    }
+  }
+}
 
 // -------- Library ---------
 
@@ -521,12 +589,15 @@ class LibraryExterior extends PNGRoom {
 class LibraryInterior extends PNGRoom {
   preload() {
     this.librarianDesk = new NPC("Librarian", 190, 700);
+    this.librarianDesk.sprite.visible = false;
     this.librarianDesk.loadInteractions(librarianTables[librarianIndex]);
 
     this.computer = new NPC("Computer", 623, 322);
+    this.computer.sprite.addImage("static", star);
     this.computer.addInteractions(["Booting up", "...", "A few moments later", "I think this looks good! I hope the manager likes it."]);
 
     this.shelf = new NPC("Shelf", 86, 473);
+    this.shelf.sprite.addImage("static", star);
     this.shelf.addInteractions(["Hmm where could this book be...", "A-C ... perhaps a little further down", "D-F ... almost there", "G-I ... Let's check here", "'How to Nail your interview' This looks like the one!"]);
   }
 
@@ -579,7 +650,9 @@ class ShelterExterior extends PNGRoom {
 class ShelterInterior extends PNGRoom {
   preload() {
     this.volunteerDesk = new NPC("Volunteer", 190, 700);
+    this.volunteerDesk.sprite.visible = false;
     this.bed = new Bed(580,550);
+    this.bed.sprite.addImage("static", star);
     this.volunteerDesk.loadInteractions(volunteerTables[volunteerIndex]);
   }
 
@@ -587,6 +660,7 @@ class ShelterInterior extends PNGRoom {
     super.draw();
     drawSprite(this.volunteerDesk.sprite);
     this.volunteerDesk.displayInteractions(playerAvatar);
+    this.bed.sprite.visible = storyline.completedDailyTasks();
     drawSprite(this.bed.sprite);
     this.bed.checkCollision(playerAvatar.sprite);
     
@@ -620,9 +694,9 @@ class RestaurantExterior extends PNGRoom {
     playerAvatar.sprite.position.y = height;
     console.log("moved to : " + height + ", " + width/2);
     if (storyline.dishMinigame && !storyline.workedToday) {
-      adventureManager.changeState("DishMinigame");
+      adventureManager.changeState("DishTutorial");
     } else if (storyline.grillMinigame && !storyline.workedToday) {
-      adventureManager.changeState("GrillMinigame");
+      adventureManager.changeState("GrillTutorial");
     } else {
       adventureManager.changeState("Restaurant");
     }
@@ -634,6 +708,7 @@ class RestaurantInterior extends PNGRoom {
   preload() {
     this.manager = new NPC("Manager", 300, 522);
     this.manager.loadInteractions(managerTables[managerIndex]);
+    this.manager.sprite.visible = false;
   }
 
   draw() {
@@ -766,6 +841,7 @@ class DishMinigame extends PNGRoom {
   }
 
   draw() {
+    super.draw();
     this.game.draw();
     if (this.game.recordedScore) {
       // when the game is over, move outside;
@@ -803,10 +879,10 @@ class GrillMinigame extends PNGRoom {
 
   exitGame() {
     console.log("Exiting Game");
-    // teleport to library
-    playerAvatar.sprite.position.x = width/2;
-    playerAvatar.sprite.position.y = height;
-    // console.log("moved to : " + height + ", " + width/2);
+    // move sprite outside
+    playerAvatar.sprite.position.x = 293;
+    playerAvatar.sprite.position.y = 663;
+    console.log("moved to : " + height + ", " + width/2);
     adventureManager.changeState("Map1");
   }
 }

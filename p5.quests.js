@@ -8,6 +8,7 @@ class LoadingScreen {
         this.active = false;
         this.pauseTime = 2;
         this.gameOver = false;
+        this.drawEndScreen = false;
     }
 
     start() {
@@ -21,6 +22,7 @@ class LoadingScreen {
         this.active = true;
         this.stopDegree = 0;
         this.startDegree = 0;
+        this.pauseTime = 2;
         this.gameOver = true;
     }
 
@@ -34,6 +36,7 @@ class LoadingScreen {
         } else if (this.pauseTime > 0) {
             // pauses for a brief moment
             this.pauseTime -= this.loadingScreenSpeed;
+            this.drawEndScreen = this.gameOver;
         } else if (!this.gameOver){
             // end: starts shrinking the circle
             this.startDegree += this.loadingScreenSpeed;
@@ -50,6 +53,21 @@ class LoadingScreen {
             push();
             fill(0);
             arc(width/2, height/2, 2000, 2000, this.startDegree - HALF_PI, this.stopDegree - HALF_PI);
+            pop();
+        }
+
+        if (this.drawEndScreen) {
+            console.log("Drawing end screen");
+            // draw end screen
+            push();
+            fill(255);
+            textAlign(CENTER);
+            textSize(60);
+            textFont(titleFont);
+            text("The End", width/2, 400);
+            textFont(bodyFont);
+            textSize(24);
+            text("Thanks for playing!", width/2, 425);
             pop();
         }
     }
@@ -142,14 +160,10 @@ class Quiz {
 
 class Inventory {
     constructor() {
-        this.flashDrive = new Item(925,775);
-        this.book = new Item(800,775);
-        this.resume = new Item(925,775);
-        this.paperwork = new Item(925,775);
-    }
-
-    preload() {
-        return;
+        this.flashDrive = new Item(925,760,itemImages[0]);
+        this.book = new Item(800,760,itemImages[1]);
+        this.resume = new Item(925,760,itemImages[2]);
+        this.paperwork = new Item(925,760,itemImages[3]);
     }
 
     draw() {
@@ -167,8 +181,14 @@ class Inventory {
             console.log("showing flash drive");
             textBox("A flash drive containing Rosie's resume. Talk to the librarian to get it printed out.", true);
         } else if (this.book.isHovered) {
+            if (storyline.storyIndex === 8 && quiz.index < quiz.randomQuiz.length) {
+                let currentAnswer = quiz.quizAnswers[quiz.randomQuiz[quiz.index]];
+                textBox("The correct answer to this question is: " + quiz.quizChoices[quiz.randomQuiz[quiz.index]][currentAnswer] , false);
+            } else {
+                textBox("To complete the interview quiz, use the arrow keys to select and answer, and press return to submit. Hover over this book again while you take the quiz!", true);
+            }
             console.log("showing book");
-            textBox("[Temporary] A book containing the answers to the quiz", true);
+            
         } else if (this.resume.isHovered) {
             console.log("showing resume");
             textBox("A copy of Rosie's resume. Give it to the manager so you can interview for the job.", true);
@@ -206,7 +226,7 @@ class Storyline {
         this.grillMinigame = false;
         this.grillScore = 0;
         // need to gete 20 points to get promoted
-        this.requiredPoints = 1;
+        this.requiredPoints = 15;
 
         this.currentHint = "";
         // var narrator = new NPC("narrator", -100,-100);
@@ -234,7 +254,7 @@ class Storyline {
                     // Talk to the Volunteer and then start Quest 2
                     this.currentHint = "";
                     console.log("Done with Quest 1");
-                    narrator.loadLines(["Hey! Its me again, the Narrator. Seems as though you have met our dear friend, Volunteer! Volunteer is an amazing person who can answer any questions you might have throughout the rest of the game. If you are ever stuck or need help, pay her a visit!", "Now you're ready to begin Quest 2! ~ Finding a Job ~"]);
+                    narrator.loadLines(["Narrator: Hey! Its me again, the Narrator. Seems as though you have met our dear friend, Volunteer! Volunteer is an amazing person who can answer any questions you might have throughout the rest of the game.", "Narrator: If you are ever stuck or need help, pay her a visit!", "Narrator: Now you're ready to begin Quest 2! ~ Finding a Job ~"]);
                     librarianIndex = 1;
                     volunteerIndex = 1;
                     questNum = 2;
@@ -287,7 +307,7 @@ class Storyline {
                     // Take the quiz ( this stage repeats until you pass the quiz )
                     this.displayQuiz = false;
                     if (quiz.passed) {
-                        this.currentHint = "Come back later to start your first shift!"
+                        this.currentHint = "Manager: Come back later to start your first shift!"
                         console.log("Passed with quiz");
                         managerIndex = 2;
                     } else {
@@ -301,6 +321,7 @@ class Storyline {
                 case 9:
                     // Talk to the manager again to accept the job
                     console.log("Got the Job!");
+                    this.currentHint = "Rosie: I should tell Volunteer that I got the job!"
                     volunteerIndex ++;
                     adventureManager.reload("Shelter");
                     this.restaurantLocked = true;
@@ -309,11 +330,11 @@ class Storyline {
                     // Talk to the volunteer
                     console.log("Pick up your son");
                     this.currentHint = "Head to the school to pick up your son!";
-                    narrator.loadLines(["Let me jump in again here to explain what's next. Each day, you can go to work and you have one attempt at a minigame/simulation. If you earn enough points from those games, the manager might (most definitely will) promote you.", "Every day you also need to bring your son to school before you go to work, and then pick him up afterwards. Speaking of which, you should probably go and pick him up right now!"]);
+                    narrator.loadLines(["Narrator: Let me jump in again here to explain what's next. Each day, you can go to work and you have one attempt at a minigame/simulation. If you earn enough points from those games, the manager might (most definitely will) promote you.", "Narrator: Every day you also need to bring your son to school before you go to work, and then pick him up afterwards", "Narrator: Speaking of which, you should probably go and pick him up right now!"]);
                     this.workedToday = true;
                     this.bedLocked = false;
 
-                    sonAvatar.loadLines(["Hey kiddo, I got some exciting news! I found a job!", "Really?? Does that mean we can stay at home again?", "No not yet. The job I found doesn't pay all that much, so in the meantime we are going to stay at the shelter on the other side of town.", "Oh okay...", "Hey, we'll make it through this okay?", "Yeah...", "..."]);
+                    sonAvatar.loadLines(["Rosie: Hey kiddo, I got some exciting news! I found a job!", "Son: Really?? Does that mean we can stay at home again?", "Rosie: No not yet. The job I found doesn't pay all that much, so in the meantime we are going to stay at the shelter on the other side of town.", "Son: Oh okay...", "Rosie: Hey, we'll make it through this okay?", "Son: Yeah...", "Rosie: C'mon lets head over to the shelter then."]);
                     this.sonDialogue = true;
                     this.restaurantLocked = true;
                     this.promotionReady = true;
@@ -363,6 +384,7 @@ class Storyline {
                 case 15:
                     // Talk to the Manager to get promoted
                     console.log("15: Getting promoted to Manager");
+                    this.currentHint = "Rosie: I should tell Volunteer about this promotion! Maybe we can start looking for places now.";
                     this.grillMinigame = false;
                     this.promotionReady = false;
                     this.bedLocked = true;
@@ -373,6 +395,7 @@ class Storyline {
                     break;
                 case 16:
                     // Share news with son and Volunteer
+                    this.currentHint = "";
                     console.log("16: Talking with son")
                     sonAvatar.loadLines(["Rosie: I have some good news today!", "Son: What happened?", "Rosie: I got promoted again! I'm the Manager now!", "Son: Really!?! Does that mean ..?", "Rosie: We'll see! Let's head over to the shelter to talk to Volunteer again.", "Son: Okay!"]);
                     this.sonDialogue = true;

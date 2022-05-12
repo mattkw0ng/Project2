@@ -336,6 +336,7 @@ class AdventureManager {
         let distanceY = this.playerSprite.position.y - currSprite.position.y;
     
         if( prevState == "Library") {
+            console.log("exited library");
             currSprite.position.x = 580;
             currSprite.position.y = 544;
         } else if (prevState == "Shelter") {
@@ -344,9 +345,7 @@ class AdventureManager {
         } else if (prevState == "Grill" || prevState == "Restaurant") {
             currSprite.position.x = 293;
             currSprite.position.y = 663;
-        }
-    
-        if( this.playerSprite.position.x < -1 ) {
+        } else if( this.playerSprite.position.x < -1 ) {
             console.log("moving sprite");
             currSprite.position.x = width;
         }

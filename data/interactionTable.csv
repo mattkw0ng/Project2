@@ -1,6 +1,8 @@
 CurrentState,ClickableName,MapDirection,NextState
-Splash,,,Instructions
-Instructions,StartGame,,Map5
+Splash,,,Background
+Background,,,Tutorial
+Tutorial,,,Goal
+Goal,,,Map5
 Map1,,E,Map2
 Map1,,S,Map4
 Map2,,W,Map1

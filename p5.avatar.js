@@ -136,19 +136,13 @@ class Avatar  {
 // 2D sprite which we will be able to pick up and dropp
 class Item {
   // call upon preload() of p5.js to acutally load the image
-  constructor(x, y, pngPath) {
-    // if (pngPath !== null) {
-    //   this.img = loadImage(pngPath);
-    // }
+  constructor(x, y, img) {
     this.sprite = createSprite(x, y);
     this.sprite.mouseActive;
     this.sprite.setDefaultCollider();
     this.inInventory = false;
     this.isHovered = false;
-  }
-
-  setup() {
-    this.sprite.addImage('static', this.img );
+    this.sprite.addImage('static', img );
   }
 
   draw() {
@@ -171,6 +165,7 @@ class DoorSprite {
     } else {
       this.sprite.width = 80;
     }
+    this.sprite.visible = false;
   }
 }
 
@@ -298,6 +293,14 @@ class Son extends Avatar {
     return this.sprite.velocity.y + this.sprite.velocity.x === 0 && !this.atSchool;
   }
 
+  setAnimation() {
+    if (this.sprite.velocity.y + this.sprite.velocity.x === 0) {
+      this.sprite.changeImage('standing');
+    } else {
+      this.sprite.changeAnimation('walking');
+    }
+  }
+
   draw() {
     if (this.following) {
       // Should follow to the right or left of the player avatar
@@ -307,6 +310,8 @@ class Son extends Avatar {
         this.offsetX = - 55;
       }
       this.setAttractionPoint(playerAvatar.sprite.position.x + this.offsetX, playerAvatar.sprite.position.y + this.offsetY);
+
+      this.setAnimation();
       drawSprite(this.sprite);
     }
     this.speak(true);

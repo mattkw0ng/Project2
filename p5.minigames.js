@@ -10,6 +10,8 @@ class DishWasher {
   }
 
   draw() {
+    playerAvatar.sprite.visible = this.timer.expired() && !this.recordedScore;
+
     if (!this.startGame) {
       this.start();
     } else if (this.timer.expired() && !this.recordedScore) {
@@ -19,6 +21,7 @@ class DishWasher {
       storyline.workedToday = true;
       storyline.restaurantLocked = true;
       this.recordedScore = true;
+      narrator.loadLines(["GAME OVER","Rosie: All done with work today!","Today's score: " + this.score]);
       return;
     }
 
@@ -44,7 +47,8 @@ class DishWasher {
     
     textSize(36);
     text(message,width/2,45);
-    text(this.score,950,300);
+    textFont(bodyFont);
+    text("Plates cleaned: " + this.score,785,630);
     pop();
   }
 }
@@ -54,13 +58,15 @@ class Dish {
     this.maxStains = numStains;
     this.stainsCleaned = 0;
     this.stainSprites = [];
-    this.plate = createSprite(500, 500);
-    this.plate.width = 500;
-    this.plate.height = 500;
+    this.plate = createSprite(415, 400);
+    this.plate.width = 400; // 215 - 615
+    this.plate.height = 400; // 200 - 600
+    this.plate.visible = false;
     for( let i = 0 ; i < this.maxStains ; i ++) {
-      let x = Math.random()*500 + 250;
-      let y = Math.random()*500 + 250;
+      let x = Math.random()*400 + 215;
+      let y = Math.random()*400 + 200;
       this.stainSprites[i] = createSprite(x, y);
+      this.stainSprites[i].addImage('default',stain);
       this.stainSprites[i].mouseActive;
       this.stainSprites[i].setDefaultCollider();
     }
@@ -107,16 +113,22 @@ class Dish {
 class Grill {
   constructor() {
     // Grill minigame
-    this.stack = createSprite(50,400);
+    this.stack = createSprite(65,325);
     this.stack.mouseActive;
+    this.stack.visible = false;
     this.stack.setDefaultCollider();
 
-    this.plate = createSprite(950,400);
+    this.plate = createSprite(950,350);
+    this.plate.height = 200;
     this.plate.mouseActive;
+    this.plate.visible = false;
     this.plate.setDefaultCollider();
 
-    this.trashcan = createSprite(950, 600);
+    this.trashcan = createSprite(943, 685);
+    this.trashcan.height = 230;
+    this.trashcan.width = 115
     this.trashcan.mouseActive;
+    this.trashcan.visible = false;
     this.trashcan.setDefaultCollider();
 
     this.spatula = createSprite(mouseX, mouseY);
@@ -127,7 +139,7 @@ class Grill {
     this.burgerCount = 0;
     this.selected = 0;
     this.score = 0;
-    this.timer = new Timer(60000); // 1 minute timer
+    this.timer = new Timer(30000); // 1 minute timer
     this.startGame = false;
     this.recordedScore = false;
 
@@ -156,6 +168,8 @@ class Grill {
   }
 
   checkCollisions() {
+    playerAvatar.sprite.visible = this.timer.expired() && !this.recordedScore;
+
     if (!this.startGame) {
       this.start();
     } else if (this.timer.expired() && !this.recordedScore) {
@@ -165,6 +179,7 @@ class Grill {
       storyline.workedToday = true;
       storyline.restaurantLocked = true;
       this.recordedScore = true;
+      narrator.loadLines(["GAME OVER","Rosie: All done with work today!","Today's score: " + this.score]);
       return;
     }
 
@@ -228,7 +243,7 @@ class Grill {
       if ( this.registerClick(this.plate) ){
         if (burger.status === "fully-cooked") {
           console.log("successfully submitted - " + this.selected);
-          this.score++;
+          this.score+= 2;
           burger.done = true;
           burger.destroy();
           this.emptySpatula = true;
@@ -312,6 +327,13 @@ class Burger {
 
     this.mouseWasPressed = false;
     this.mouseClicked = false;
+
+    this.sprite.addImage('raw', burgerImages[0]);
+    this.sprite.addImage('half-cooked', burgerImages[1]);
+    this.sprite.addImage('cooked', burgerImages[2]);
+    this.sprite.addImage('burnt', burgerImages[3]);
+
+    this.sprite.changeImage('raw');
   }
 
   draw() {
@@ -324,12 +346,14 @@ class Burger {
     //Text
     push();
     textAlign(CENTER)
-    text(this.index, this.sprite.position.x, this.sprite.position.y - 12);
+    if (this.status === "burned") {
+      fill("white");
+    }
     text(this.status, this.sprite.position.x, this.sprite.position.y + 10);
     if (this.ready) {
       fill("red");
     }
-    text(this.timer.getRemainingTimeFormatted(), this.sprite.position.x, this.sprite.position.y);
+    text(this.timer.getRemainingTimeFormatted(), this.sprite.position.x, this.sprite.position.y - 2);
     pop();
   }
 
@@ -365,6 +389,7 @@ class Burger {
     if (this.timer.expired()) {
       if (this.ready && !this.pickedUp) {
         // the burger was previously ready, meaning the player waited too long to flip
+        this.sprite.changeImage('burnt');
         this.status = "burned";
       } else if (this.status === "burned") {
         this.ready = true;
@@ -379,10 +404,12 @@ class Burger {
   tryFlip() {
     // change status
     if (this.status === "raw") {
+      this.sprite.changeImage('half-cooked');
       this.status = "half-cooked";
       this.ready = false;
       this.timer.start();
     } else if (this.status === "half-cooked") {
+      this.sprite.changeImage('cooked');
       this.status = "cooked";
       this.ready = false;
       this.timer.start();
