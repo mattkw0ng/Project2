@@ -1,15 +1,13 @@
 /***********************************************************************************
-  Avatar Classes
+  Avatar Classes - By Matt Kwong
 
-  Uses the p5.play library with Avatar and other classes
-
-  This class is a TEMPLATE for you to modify in your other code.
-
-  Avatar Class:
-    - will automatically mirror when you change the speed of the avatar
-    - you can change the speed of the avatar
-    - set positions for each one
-    - do collision-detection
+  Includes the following classes:
+  - Avatar
+  - NPC
+  - Son
+  - Bed
+  - DoorSprite
+  - Item
   
 ------------------------------------------------------------------------------------
 	To use:

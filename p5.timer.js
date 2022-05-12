@@ -2,8 +2,10 @@
 //
 //  Class: Timer
 //
-//  Written by Scott Kildall
+//  Written by Scott Kildall 
 //	for P5.js
+//
+//  Modified by Matt Kwong (to include pausing)
 //
 //------------------------------------------------------------------------------------------------------------------
 // - Very simple but incredibly useful timer class

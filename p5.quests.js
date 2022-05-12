@@ -1,3 +1,19 @@
+/***********************************************************************************
+  Quest Classes - By Matt Kwong
+
+  Includes the following classes:
+  - LoadingScreen
+  - Quiz
+  - Inventory
+  - Storyline
+  
+------------------------------------------------------------------------------------
+	To use:
+	Add this line to the index.html
+
+  <script src="p5.avatar.js"></script>
+***********************************************************************************/
+
 class LoadingScreen {
     // Animates a Loading screen for transitions in the story
 

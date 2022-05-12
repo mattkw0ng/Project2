@@ -1,3 +1,20 @@
+
+/***********************************************************************************
+  Minigame Classes - By Matt Kwong
+
+  Includes the following classes:
+  - DishWasher
+  - Dish
+  - Grill
+  - Burger
+  
+------------------------------------------------------------------------------------
+	To use:
+	Add this line to the index.html
+
+  <script src="p5.avatar.js"></script>
+***********************************************************************************/
+
 /* =================== Dish Washing minigame =================== */
 
 class DishWasher {

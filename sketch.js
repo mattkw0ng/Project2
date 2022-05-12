@@ -1,6 +1,6 @@
 /***********************************************************************************
-  MoodyMaze
-  by Scott Kildall
+  Project 2
+  by Matt Kwong
 
   Uses the p5.2DAdventure.js class 
   
@@ -10,8 +10,6 @@
 
   <script src="p5.2DAdventure.js"></script>
 ***********************************************************************************/
-
-//--- TEMPLATE STUFF: Don't change
 
 // adventure manager global  
 var adventureManager;
@@ -135,23 +133,16 @@ function preload() {
 // Setup the adventure manager
 function setup() {
   createCanvas(1000, 800);
-
-  //--- TEMPLATE STUFF: Don't change
-  // setup the clickables = this will allocate the array
   clickables = clickablesManager.setup();
-  //---
 
-  // MODIFY THIS: change to initial position
   playerAvatar = new Avatar("Player", 640, 400);
   sonAvatar = new Son("Son", 665, 400);
   sonAvatar.dropOff(); // son starts off at school
   narrator = new Narrator();
   loadingScreen = new LoadingScreen(0.1);
    
-  // MODIFY THIS: to make your avatar go faster or slower
   playerAvatar.setMaxSpeed(20);
 
-  // MODIFY THIS: add your filenames here, right now our moving animation and standing animation are the same
   playerAvatar.sprite.addImage('standing-down', standing_imgs[0]);
   playerAvatar.sprite.addAnimation('walk-down', 'assets/walk-down-01.png', 'assets/walk-down-04.png')
   playerAvatar.sprite.addImage('standing-up', standing_imgs[1]);
@@ -162,7 +153,6 @@ function setup() {
   sonAvatar.sprite.addImage('standing', standing_imgs[3]);
   sonAvatar.sprite.addAnimation('walking', 'assets/son-01.png', 'assets/son-04.png');
 
-  //--- TEMPLATE STUFF: Don't change
   // use this to track movement from toom to room in adventureManager.draw()
   adventureManager.setPlayerSprite(playerAvatar.sprite);
   adventureManager.setPlayerSprite2(sonAvatar.sprite);
@@ -181,7 +171,6 @@ function setup() {
   setupClickables(); 
 }
 
-// Adventure manager handles it all!
 function draw() {
   // draws background rooms and handles movement from one to another
   adventureManager.draw();
@@ -334,7 +323,6 @@ function checkDirection() {
   } 
 }
 
-//--- TEMPLATE STUFF: Don't change 
 // respond to W-A-S-D or the arrow keys
 function checkMovement() {
   var xSpeed = 0;
@@ -359,8 +347,7 @@ function checkMovement() {
   playerAvatar.setSpeed(xSpeed,ySpeed);
 }
 
-//-- MODIFY THIS: this is an example of how I structured my code. You may
-// want to do it differently
+// Handle mouse clicks
 function mouseReleased() {
   if( adventureManager.getStateName() === "Splash") {
     adventureManager.changeState("Background");
@@ -476,7 +463,6 @@ clickableButtonOnOutside = function () {
   this.color = "#AAAAAA";
 }
 
-//--- TEMPLATE STUFF: Don't change 
 clickableButtonPressed = function() {
   // these clickables are ones that change your state
   // so they route to the adventure manager to do this
