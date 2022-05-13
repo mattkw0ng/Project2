@@ -544,6 +544,8 @@ class PNGRoom {
             return;
         }
 
+        this.checkLoadedTable();
+
         push();
         imageMode(CENTER);
         image(this.image,width/2,height/2);
@@ -570,6 +572,20 @@ class PNGRoom {
         }
 
         return false; 
+    }
+
+    checkLoadedTable() {
+        if( this.collisionTable !== null && this.collisionSX.length === 0 ) { 
+            print("Collision table row count = " + this.collisionTable.getRowCount());
+            for( let i = 0; i < this.collisionTable.getRowCount(); i++ ) {
+                this.collisionSX[i] = this.collisionTable.getString(i, 'sx');
+                this.collisionSY[i] = this.collisionTable.getString(i, 'sy');
+                this.collisionEX[i] = this.collisionTable.getString(i, 'ex');
+                this.collisionEY[i] = this.collisionTable.getString(i, 'ey');
+            }
+    
+            this.collisionTableLoaded = true;
+        }
     }
 
     

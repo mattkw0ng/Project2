@@ -156,7 +156,7 @@ class Grill {
     this.burgerCount = 0;
     this.selected = 0;
     this.score = 0;
-    this.timer = new Timer(30000); // 1 minute timer
+    this.timer = new Timer(45000); // 1 minute timer
     this.startGame = false;
     this.recordedScore = false;
 

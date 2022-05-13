@@ -421,6 +421,7 @@ class Storyline {
                     adventureManager.reload("Shelter");
                     this.grillMinigame = false;
                     this.restaurantLocked = true;
+                    this.workedToday = true;
                     break;
                 case 17:
                     // Final scene : Enter the house and ROLL CREDITS
